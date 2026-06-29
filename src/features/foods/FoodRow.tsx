@@ -9,6 +9,28 @@ interface Props {
   onQuickAdd: () => void
 }
 
+const NUTRI_COLORS: Record<string, string> = {
+  a: '#1e8f4e', b: '#7ac547', c: '#e6b800', d: '#f08c00', e: '#e63312',
+}
+
+/** Sello Nutri-Score (A-E) con el color oficial. */
+export function NutriScoreBadge({ grade }: { grade: string }) {
+  const g = grade.toLowerCase()
+  return (
+    <span
+      className="center-all"
+      style={{
+        width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+        background: NUTRI_COLORS[g] ?? 'var(--text-3)', color: '#fff',
+        fontWeight: 800, fontSize: 11, lineHeight: 1,
+      }}
+      title={`Nutri-Score ${g.toUpperCase()}`}
+    >
+      {g.toUpperCase()}
+    </span>
+  )
+}
+
 /** Fila de resultado de búsqueda de alimento. */
 export function FoodRow({ food, onOpen, onQuickAdd }: Props) {
   const sv = defaultServing(food)
@@ -16,9 +38,13 @@ export function FoodRow({ food, onOpen, onQuickAdd }: Props) {
   return (
     <div className="list-item list-item--tap" role="button" onClick={onOpen}>
       <div className="col" style={{ gap: 2, minWidth: 0, flex: 1 }}>
-        <div className="row gap-2" style={{ minWidth: 0 }}>
+        <div className="row gap-2" style={{ minWidth: 0, alignItems: 'center' }}>
           <span className="list-item__title ellipsis">{food.name}</span>
           {food.verified && <Icon name="check-circle" size={14} color="var(--good)" style={{ flexShrink: 0 }} />}
+          {food.nutriScore && <NutriScoreBadge grade={food.nutriScore} />}
+          {food.nova === 4 && (
+            <span className="cap" style={{ flexShrink: 0, fontSize: 9.5, fontWeight: 700, color: 'var(--warn)', border: '1px solid var(--warn)', borderRadius: 4, padding: '0 4px' }} title="Ultraprocesado (NOVA 4)">UP</span>
+          )}
         </div>
         <span className="list-item__sub ellipsis">
           {fmtKcal(n.calories)} kcal · {sv.label}

@@ -52,6 +52,7 @@ interface OffProduct {
   serving_quantity?: number | string
   nutriments?: Record<string, unknown>
   nutriscore_grade?: string
+  nova_group?: number | string
   image_front_small_url?: string
 }
 
@@ -74,6 +75,8 @@ export function offToFood(p: OffProduct): Food | null {
   if (per100.calories === 0 && per100.carbs === 0 && per100.fat === 0 && per100.protein === 0) {
     return null // sin datos nutricionales útiles
   }
+  const grade = typeof p.nutriscore_grade === 'string' ? p.nutriscore_grade.toLowerCase() : undefined
+  const nova = p.nova_group != null ? num(p.nova_group) : 0
   return {
     id: `off_${p.code ?? uid()}`,
     name: name.trim(),
@@ -81,6 +84,8 @@ export function offToFood(p: OffProduct): Food | null {
     barcode: p.code,
     source: 'off',
     verified: false,
+    nutriScore: grade && 'abcde'.includes(grade) ? grade : undefined,
+    nova: nova >= 1 && nova <= 4 ? nova : undefined,
     per100,
     servings: buildServings(p),
     createdAt: Date.now(),
@@ -93,7 +98,7 @@ export async function searchOff(query: string, signal?: AbortSignal): Promise<Fo
   const url =
     `${BASE}/cgi/search.pl?search_terms=${encodeURIComponent(query)}` +
     `&search_simple=1&action=process&json=1&page_size=30&sort_by=popularity_key` +
-    `&fields=code,product_name,product_name_es,generic_name_es,brands,quantity,serving_size,serving_quantity,nutriments,nutriscore_grade,image_front_small_url`
+    `&fields=code,product_name,product_name_es,generic_name_es,brands,quantity,serving_size,serving_quantity,nutriments,nutriscore_grade,nova_group,image_front_small_url`
   try {
     const res = await fetch(url, { signal, headers: { 'User-Agent': UA } })
     if (!res.ok) return []
@@ -118,7 +123,7 @@ export function isStoreInternalBarcode(code: string): boolean {
 /** Busca un producto por su código de barras (UPC/EAN). */
 export async function lookupBarcode(code: string, signal?: AbortSignal): Promise<Food | null> {
   const url = `${BASE}/api/v2/product/${encodeURIComponent(code)}.json` +
-    `?fields=code,product_name,product_name_es,generic_name_es,brands,quantity,serving_size,serving_quantity,nutriments,image_front_small_url`
+    `?fields=code,product_name,product_name_es,generic_name_es,brands,quantity,serving_size,serving_quantity,nutriments,nutriscore_grade,nova_group,image_front_small_url`
   try {
     const res = await fetch(url, { signal, headers: { 'User-Agent': UA } })
     if (!res.ok) return null
