@@ -15,8 +15,8 @@ Tu trabajo: mantener, mejorar y desplegar esta app cuando Alejandro lo pida, sin
 
 ## Enlaces y cuentas (autorizado por Alejandro)
 
-- **App en vivo (HTTPS):** https://piki2066.github.io/nutripal/
-- **Repo (público):** https://github.com/piki2066/nutripal — cuenta de GitHub **`piki2066`** (ya autenticada en `gh`).
+- **App en vivo (HTTPS):** https://piki2066.github.io/nutripiki/
+- **Repo (público):** https://github.com/piki2066/nutripiki — cuenta de GitHub **`piki2066`** (ya autenticada en `gh`).
 - **Autorización:** Alejandro aprobó **desplegar públicamente** la app a GitHub Pages (repo público). Solo se publica el *código* de la app; **sus datos personales nunca salen del dispositivo**. No hace falta volver a pedir permiso para republicar cambios suyos.
 
 ## Stack y arquitectura
@@ -43,13 +43,13 @@ src/
 
 1. **Antes de dar nada por bueno: `npm run build` debe pasar** (corre `tsc --noEmit` + `vite build`). No entregues con errores de tipos.
 2. **Para ver la app**: `npm run dev` (http://localhost:5173) o `npm run build && npm run preview` (http://localhost:4173). En `localhost` la PWA funciona completa (instalable + offline).
-3. **Para publicar cambios en la app de Alejandro**: **`npm run deploy`** — reconstruye con base `/nutripal/` (`GH_PAGES=1`), publica `dist/` en la rama `gh-pages` y queda en https://piki2066.github.io/nutripal/ en ~1 min. Después haz `git add -A && git commit && git push origin main` del código fuente.
+3. **Para publicar cambios en la app de Alejandro**: **`npm run deploy`** — reconstruye con base `/nutripal/` (`GH_PAGES=1`), publica `dist/` en la rama `gh-pages` y queda en https://piki2066.github.io/nutripiki/ en ~1 min. Después haz `git add -A && git commit && git push origin main` del código fuente.
 4. **Verificación real opcional** (sin navegador interactivo): hay scripts CDP de ejemplo que cargan la app en Chrome headless y vuelcan texto/captura — útil para confirmar que arranca tras cambios grandes.
 5. **Estilo**: UI en español, usa los design tokens y clases CSS existentes (`.card`, `.btn`, `.list`, `.chip`, `Sheet`, `Ring`…). No metas dependencias pesadas nuevas sin necesidad. Mantén cada archivo enfocado.
 
 ## ⚠️ Lecciones críticas sobre DATOS (no repetir errores)
 
-- **Los datos van atados al ORIGEN (la URL).** Cada enlace/origen distinto = su propio IndexedDB. Datos metidos en `http://192.168.x.x:4173` (servidor del Mac por WiFi) **no aparecen** en `https://piki2066.github.io/nutripal/`. **Regla: Alejandro usa SOLO el enlace de internet instalado.** No le des enlaces de LAN para uso real — solo confunden y "pierden" datos.
+- **Los datos van atados al ORIGEN (la URL).** Cada enlace/origen distinto = su propio IndexedDB. Datos metidos en `http://192.168.x.x:4173` (servidor del Mac por WiFi) **no aparecen** en `https://piki2066.github.io/nutripiki/`. **Regla: Alejandro usa SOLO el enlace de internet instalado.** No le des enlaces de LAN para uso real — solo confunden y "pierden" datos.
 - **iOS**: instalar con *Añadir a pantalla de inicio* es lo que hace los datos **persistentes** (exentos del borrado a 7 días de Safari). Ya se llama `navigator.storage.persist()` al arrancar para reforzarlo.
 - **No hay sincronización entre dispositivos** (es local). Para mover/respaldar datos: **Más → Ajustes → Exportar datos (JSON)** y luego *Importar*. Recomiéndale exportar de vez en cuando.
 - **`wipeAllData()`** (Ajustes → "Borrar todos los datos") borra TODO sin vuelta atrás. Ya tiene confirmación; no lo dispares nunca por tu cuenta.

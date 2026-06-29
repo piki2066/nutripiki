@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'node:path'
 
-// En GitHub Pages la app vive bajo /nutripal/. En local (dev/preview) bajo /.
-const BASE = process.env.GH_PAGES ? '/nutripal/' : '/'
+// En GitHub Pages la app vive bajo /nutripiki/. En local (dev/preview) bajo /.
+const BASE = process.env.GH_PAGES ? '/nutripiki/' : '/'
 
 // https://vite.dev/config/
 export default defineConfig({

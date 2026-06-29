@@ -1,6 +1,6 @@
 # NutriPiki — tu MyFitnessPal personal (100% local)
 
-> ### 📲 App en vivo: **https://piki2066.github.io/nutripal/**
+> ### 📲 App en vivo: **https://piki2066.github.io/nutripiki/**
 > Ábrela en **Safari (iPhone)** → Compartir → **Añadir a pantalla de inicio**. Funciona **offline** y con el Mac apagado. También funciona en el Mac desde esa misma URL.
 
 Diario de **calorías, macros, micronutrientes, peso, medidas, ejercicio, agua y ayuno intermitente**, con todas las funciones "premium" de MyFitnessPal incluidas y **sin pagar nada**. Es una **PWA** (app web instalable) que funciona **offline** y guarda **todos tus datos solo en tu dispositivo** (IndexedDB). Sin cuentas, sin nube, sin anuncios.
