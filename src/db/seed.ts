@@ -1,6 +1,7 @@
 import type { ExerciseDef, Food, Nutrients, ServingOption } from './types'
 import { EMPTY_NUTRIENTS } from './types'
 import { uid } from '@/lib/id'
+import { normalize } from '@/lib/search'
 
 /** Helper compacto: nutrientes por 100 g. Orden: kcal,carb,fat,prot,fiber,sugar,sat,sodium,potas */
 function n(
@@ -15,6 +16,11 @@ function serv(label: string, grams: number, isDefault = false): ServingOption {
   return { id: uid('sv'), label, grams, isDefault }
 }
 
+/** ID determinista y estable para un alimento base (permite top-up idempotente). */
+function seedId(name: string): string {
+  return 'seed_' + normalize(name).replace(/\s+/g, '_')
+}
+
 /** Construye un Food "seed" con raciones estándar (100 g + raciones dadas). */
 function food(
   name: string, per100: Nutrients, servings: ServingOption[],
@@ -24,7 +30,7 @@ function food(
   const all = servings.length ? servings : [serv(opts.isLiquid ? '1 porción (250 ml)' : '1 porción (100 g)', opts.isLiquid ? 250 : 100, true)]
   if (!all.some((s) => s.isDefault)) all[0].isDefault = true
   return {
-    id: uid('seed'),
+    id: seedId(name),
     name,
     brand: opts.brand,
     barcode: opts.barcode,
@@ -117,6 +123,17 @@ export const SEED_FOODS: Food[] = [
   food('Miel', n(304, 82, 0, 0.3, 0.2, 82, 0, 4, 52), [serv('Cucharada (21 g)', 21, true)]),
   food('Azúcar', n(387, 100, 0, 0, 0, 100, 0, 1, 2), [serv('Cucharadita (4 g)', 4, true), serv('Cucharada (12 g)', 12)]),
 ]
+
+// Aviso si dos alimentos base generan el mismo id (nombres repetidos): rompería el top-up.
+{
+  const seen = new Set<string>()
+  const dups = new Set<string>()
+  for (const f of SEED_FOODS) {
+    if (seen.has(f.id)) dups.add(f.id)
+    else seen.add(f.id)
+  }
+  if (dups.size) console.error('[seed] IDs de alimentos duplicados (nombres repetidos):', [...dups])
+}
 
 /** Catálogo de ejercicios con valor MET (para estimar calorías). */
 export const SEED_EXERCISES: ExerciseDef[] = [
