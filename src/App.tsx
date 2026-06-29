@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
-import { seedIfEmpty } from './db/init'
+import { seedIfEmpty, topUpSeeds } from './db/init'
 import { useProfile, useSettings } from './hooks/useData'
 import { TabBar } from './components/TabBar'
 import { Toaster } from './components/Toaster'
@@ -40,7 +40,10 @@ export default function App() {
     // disponible en modo privado), la app sigue funcionando igualmente.
     seedIfEmpty()
       .catch((e) => console.error('seedIfEmpty', e))
-      .finally(() => setSeeded(true))
+      .finally(() => {
+        setSeeded(true)
+        topUpSeeds().catch((e) => console.error('topUpSeeds', e))
+      })
   }, [])
 
   // Aplicar tema + acento

@@ -1,6 +1,6 @@
 import { db } from './db'
 import { SEED_FOODS, SEED_EXERCISES } from './seed'
-import { tokenize } from '@/lib/search'
+import { tokenize, normalize } from '@/lib/search'
 import type { AppSettings } from './types'
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -31,5 +31,30 @@ export async function seedIfEmpty(): Promise<void> {
   const settings = await db.settings.get('app')
   if (!settings) {
     await db.settings.add(DEFAULT_SETTINGS)
+  }
+}
+
+/**
+ * Añade los alimentos base que falten a instalaciones ya existentes (con datos),
+ * sin duplicar ni sobrescribir. Idempotente: ejecutar en cada arranque es seguro.
+ * Dedup por id determinista Y por nombre normalizado (evita duplicar seeds antiguos
+ * que tenían ids aleatorios).
+ */
+export async function topUpSeeds(): Promise<void> {
+  try {
+    const seeds = await db.foods.where('source').equals('seed').toArray()
+    const haveIds = new Set(seeds.map((f) => f.id))
+    const haveNames = new Set(seeds.map((f) => normalize(f.name)))
+    const missing = SEED_FOODS.filter(
+      (f) => !haveIds.has(f.id) && !haveNames.has(normalize(f.name)),
+    )
+    if (!missing.length) return
+    const withTokens = missing.map((f) => ({
+      ...f,
+      tokens: tokenize(`${f.name} ${f.brand ?? ''}`),
+    })) as unknown as typeof SEED_FOODS
+    await db.foods.bulkPut(withTokens)
+  } catch (e) {
+    console.error('topUpSeeds', e)
   }
 }
