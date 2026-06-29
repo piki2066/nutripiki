@@ -54,7 +54,9 @@ src/
 
 ## Pendiente / próximos pasos
 
-- **Incidencia abierta (2026-06-29):** Alejandro perdió datos por el lío de dos enlaces (LAN vs Pages). Recuperación según dónde estuvieran (export→import). **Compromiso adquirido con él:** dejarle **solo el enlace de internet** y añadir una **copia de seguridad automática** para que no pueda volver a pasar.
+- **Fase 1 — HECHA (2026-06-29):** ampliado el catálogo local de alimentos (~63 → ~238 genéricos españoles, con **ids deterministas** `seed_<slug>` y **top-up idempotente** en el arranque vía `topUpSeeds()` en `db/init.ts`, para que los alimentos nuevos lleguen también a instalaciones con datos). Escáner: si un código no está en local ni en OFF, o es un **código interno de súper** (`isStoreInternalBarcode()` en `lib/off.ts`, EAN-13 que empieza por `2`), se abre `/food/new?barcode=…` para **crear y recordar** el código. Spec y plan en `docs/superpowers/specs/` y `docs/superpowers/plans/` (2026-06-29). Desplegado.
+- **Fase 2 — SIGUIENTE (decidida, falta diseñar en detalle):** **cuenta email/contraseña con sincronización** para no perder datos nunca y usar en varios dispositivos. Decisión de Alejandro: backend gestionado **Supabase** (no servidor propio), **nube normal** (cifrado en tránsito/reposo + login, recuperación de contraseña; **no** E2E), **local-first y opt-in** (la app sigue 100% local sin cuenta; al iniciar sesión, además sincroniza). Sync "última modificación gana" + tombstones; fotos fuera de la v1. Esto **cambia la sección de Privacidad** (los datos saldrán a la nube solo si inicia sesión). Cuando se aborde: hacer brainstorming → spec → plan propios.
+- **Incidencia (2026-06-29):** Alejandro perdió datos por el lío de dos enlaces (LAN vs Pages). **Regla vigente:** solo el enlace de internet. La copia de seguridad automática prometida queda cubierta por la Fase 2 (sync); mientras tanto, recordar export/import manual.
 - Posible mejora pedida: **varios perfiles en un mismo dispositivo** (selector de persona) — solo si confirma que comparten un teléfono; el caso normal (cada uno en su móvil) ya funciona compartiendo el enlace.
 
 ## Privacidad
