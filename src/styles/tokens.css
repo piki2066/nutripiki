@@ -1,0 +1,89 @@
+/* ==========================================================================
+   NutriPal — Design tokens
+   Tema iOS-like. Oscuro por defecto, con variante clara.
+   ========================================================================== */
+:root {
+  /* Marca */
+  --brand: #0a84ff;
+  --brand-2: #34c759;
+  --brand-grad: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
+
+  /* Macros (consistentes en toda la app) */
+  --carbs: #f5a623; /* carbohidratos */
+  --protein: #ff6b6b; /* proteína */
+  --fat: #4cd2c0; /* grasa */
+  --cal: #0a84ff; /* calorías */
+
+  --good: #34c759;
+  --warn: #ff9f0a;
+  --bad: #ff453a;
+
+  /* Tipografía */
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-num: 'SF Pro Display', var(--font);
+
+  /* Radios */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-pill: 999px;
+
+  /* Espaciado base */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+
+  /* Áreas seguras (notch / home indicator) */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+
+  --tabbar-h: 64px;
+  --header-h: 52px;
+  --maxw: 720px;
+}
+
+/* ---- Tema oscuro (por defecto) ---- */
+:root,
+[data-theme='dark'] {
+  --bg: #0b0f14;
+  --bg-elev: #131922;
+  --bg-elev-2: #1b2330;
+  --card: #151c26;
+  --card-2: #1d2632;
+  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline-strong: rgba(255, 255, 255, 0.14);
+  --text: #f2f5f9;
+  --text-2: #9aa7b8;
+  --text-3: #67768a;
+  --fill: rgba(255, 255, 255, 0.06);
+  --fill-2: rgba(255, 255, 255, 0.1);
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --backdrop: rgba(0, 0, 0, 0.55);
+  color-scheme: dark;
+}
+
+/* ---- Tema claro ---- */
+[data-theme='light'] {
+  --bg: #f2f4f7;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #ffffff;
+  --card: #ffffff;
+  --card-2: #f6f8fb;
+  --hairline: rgba(0, 0, 0, 0.08);
+  --hairline-strong: rgba(0, 0, 0, 0.14);
+  --text: #0c1320;
+  --text-2: #5b6776;
+  --text-3: #8a97a6;
+  --fill: rgba(0, 0, 0, 0.05);
+  --fill-2: rgba(0, 0, 0, 0.08);
+  --shadow: 0 12px 30px rgba(20, 30, 50, 0.12);
+  --shadow-sm: 0 4px 14px rgba(20, 30, 50, 0.08);
+  --backdrop: rgba(0, 0, 0, 0.35);
+  color-scheme: light;
+}
