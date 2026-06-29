@@ -8,7 +8,8 @@
     "dev": "vite --host",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview --host",
-    "serve": "vite preview --host --port 4173"
+    "serve": "vite preview --host --port 4173",
+    "deploy": "GH_PAGES=1 npm run build && touch dist/.nojekyll && cd dist && git init -q && git add -A && git -c commit.gpgsign=false commit -q -m deploy && git push -f https://github.com/piki2066/nutripal.git HEAD:gh-pages && cd .. && rm -rf dist/.git && echo '\\nDesplegado: https://piki2066.github.io/nutripal/'"
   },
   "dependencies": {
     "dexie": "^4.0.10",

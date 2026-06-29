@@ -33,6 +33,9 @@ export default function App() {
   const [seeded, setSeeded] = useState(false)
 
   useEffect(() => {
+    // Pedir almacenamiento PERSISTENTE: evita que el navegador borre tus datos
+    // por inactividad. Los PWA instalados en la pantalla de inicio lo conceden.
+    navigator.storage?.persist?.().catch(() => {})
     // Nunca bloquear el arranque: si el seeding falla (p.ej. IndexedDB no
     // disponible en modo privado), la app sigue funcionando igualmente.
     seedIfEmpty()
