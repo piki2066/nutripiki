@@ -106,6 +106,15 @@ export async function searchOff(query: string, signal?: AbortSignal): Promise<Fo
   }
 }
 
+/**
+ * ¿Es un código interno de supermercado (peso variable / numeración de tienda)?
+ * Los EAN-13 que empiezan por "2" están reservados a uso interno y NUNCA estarán
+ * en bases de datos mundiales como OpenFoodFacts.
+ */
+export function isStoreInternalBarcode(code: string): boolean {
+  return /^2\d{12}$/.test(code.trim())
+}
+
 /** Busca un producto por su código de barras (UPC/EAN). */
 export async function lookupBarcode(code: string, signal?: AbortSignal): Promise<Food | null> {
   const url = `${BASE}/api/v2/product/${encodeURIComponent(code)}.json` +
