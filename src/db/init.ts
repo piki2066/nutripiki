@@ -58,3 +58,18 @@ export async function topUpSeeds(): Promise<void> {
     console.error('topUpSeeds', e)
   }
 }
+
+/**
+ * Añade los ejercicios del catálogo que falten (p. ej. artes marciales nuevas)
+ * a instalaciones ya existentes. Dedup por nombre normalizado. Idempotente.
+ */
+export async function topUpExercises(): Promise<void> {
+  try {
+    const defs = await db.exerciseDefs.toArray()
+    const haveNames = new Set(defs.map((d) => normalize(d.name)))
+    const missing = SEED_EXERCISES.filter((e) => !haveNames.has(normalize(e.name)))
+    if (missing.length) await db.exerciseDefs.bulkAdd(missing)
+  } catch (e) {
+    console.error('topUpExercises', e)
+  }
+}
