@@ -95,6 +95,7 @@ export default function ProgressScreen() {
 
       <div className="section-title">Análisis</div>
       <div className="list">
+        <ListRow icon="trophy" iconColor="var(--brand)" title="Análisis y gasto real" sub="TDEE adaptativo, racha y consejos" onClick={() => nav('/insights')} />
         <ListRow icon="chart" iconColor="var(--brand)" title="Reportes" sub="Calorías y macros en el tiempo" onClick={() => nav('/reports')} />
         <ListRow icon="target" iconColor="var(--brand-2)" title="Panel de nutrientes" sub="Macros y micronutrientes de hoy" onClick={() => nav('/nutrition')} />
       </div>

@@ -21,6 +21,7 @@ import PhotosScreen from './features/progress/PhotosScreen'
 import FastingScreen from './features/fasting/FastingScreen'
 import NutritionScreen from './features/reports/NutritionScreen'
 import ReportsScreen from './features/reports/ReportsScreen'
+import InsightsScreen from './features/reports/InsightsScreen'
 import GoalsScreen from './features/goals/GoalsScreen'
 import ProfileScreen from './features/goals/ProfileScreen'
 import SettingsScreen from './features/settings/SettingsScreen'
@@ -91,6 +92,7 @@ export default function App() {
         <Route path="/fasting" element={<FastingScreen />} />
         <Route path="/nutrition" element={<NutritionScreen />} />
         <Route path="/reports" element={<ReportsScreen />} />
+        <Route path="/insights" element={<InsightsScreen />} />
         <Route path="/goals" element={<GoalsScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />

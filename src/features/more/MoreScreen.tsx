@@ -16,6 +16,7 @@ const NUTRITION: Item[] = [
   { icon: 'target', title: 'Objetivos', sub: 'Calorías y macros', to: '/goals' },
   { icon: 'chart', title: 'Panel de nutrientes', sub: 'Reparto del día', to: '/nutrition' },
   { icon: 'progress', title: 'Reportes', sub: 'Tendencias y resúmenes', to: '/reports' },
+  { icon: 'trophy', title: 'Análisis', sub: 'Gasto real, racha y consejos', to: '/insights' },
 ]
 
 const LOGGING: Item[] = [
