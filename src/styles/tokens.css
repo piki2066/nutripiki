@@ -51,16 +51,16 @@
 /* ---- Tema oscuro: negro mate + blanco mármol (por defecto) ---- */
 :root,
 [data-theme='dark'] {
-  --bg: #0a0a0b;
-  --bg-elev: #121214;
-  --bg-elev-2: #1a1a1d;
-  --card: #141416;
-  --card-2: #1d1d20;
-  --hairline: rgba(255, 255, 255, 0.07);
-  --hairline-strong: rgba(255, 255, 255, 0.13);
-  --text: #f1efe9; /* blanco mármol (cálido) */
-  --text-2: #a7a39a;
-  --text-3: #6e6b64;
+  --bg: #15161a; /* carbón elegante (oscuro pero no negro puro) */
+  --bg-elev: #1d1f25;
+  --bg-elev-2: #262931;
+  --card: #1f2127;
+  --card-2: #292c34;
+  --hairline: rgba(255, 255, 255, 0.09);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+  --text: #f3f1ea; /* blanco mármol (cálido) */
+  --text-2: #b0aca2;
+  --text-3: #7b7770;
   --fill: rgba(255, 255, 255, 0.05);
   --fill-2: rgba(255, 255, 255, 0.09);
   --shadow: 0 16px 40px rgba(0, 0, 0, 0.6);

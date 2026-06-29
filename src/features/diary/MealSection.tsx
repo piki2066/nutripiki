@@ -6,7 +6,7 @@ import { ListRow } from '@/components/ui'
 import type { FoodEntry, MealName } from '@/db/types'
 import { MEAL_LABELS } from '@/db/types'
 import { mealTotals } from '@/lib/selectors'
-import { copyMealToDate, rememberMeal } from '@/db/repo'
+import { copyMealToDate, rememberMeal, setEntryDone } from '@/db/repo'
 import { fmtKcal, fmtNum } from '@/lib/format'
 import { useUI } from '@/lib/store'
 import { shiftKey, friendlyDate } from '@/lib/date'
@@ -58,21 +58,33 @@ export function MealSection({ meal, date, entries, onEntry, showMacros }: Props)
         <button className="icon-btn" onClick={() => setTools(true)} aria-label="Opciones"><Icon name="more" size={20} /></button>
       </div>
 
-      {mealEntries.map((e) => (
-        <button key={e.id} className="list-item list-item--tap" onClick={() => onEntry(e)} style={{ minHeight: 50 }}>
-          <div className="col" style={{ gap: 1, flex: 1, minWidth: 0, alignItems: 'flex-start' }}>
-            <span className="list-item__title ellipsis" style={{ fontSize: 14 }}>
-              {e.isQuickAdd && <Icon name="bolt" size={12} color="var(--carbs)" style={{ marginRight: 4, display: 'inline' }} />}
-              {e.name}
-            </span>
-            <span className="list-item__sub ellipsis">
-              {e.quantity !== 1 ? `${fmtNum(e.quantity)} × ` : ''}{e.servingLabel}
-              {showMacros && ` · C${fmtNum(e.nutrients.carbs)} P${fmtNum(e.nutrients.protein)} G${fmtNum(e.nutrients.fat)}`}
-            </span>
+      {mealEntries.map((e) => {
+        const planned = e.done === false
+        return (
+          <div key={e.id} className="row" style={{ alignItems: 'stretch' }}>
+            {planned && (
+              <button className="center-all" onClick={() => setEntryDone(e.id, true)} aria-label="Marcar como comido"
+                style={{ width: 40, flexShrink: 0, background: 'none' }}>
+                <span className="center-all" style={{ width: 22, height: 22, borderRadius: 999, border: '1px solid var(--hairline-strong)', color: 'var(--text-3)' }} />
+              </button>
+            )}
+            <button className="list-item list-item--tap" onClick={() => onEntry(e)} style={{ minHeight: 50, flex: 1, minWidth: 0, opacity: planned ? 0.6 : 1 }}>
+              <div className="col" style={{ gap: 1, flex: 1, minWidth: 0, alignItems: 'flex-start' }}>
+                <span className="list-item__title ellipsis" style={{ fontSize: 14 }}>
+                  {e.isQuickAdd && <Icon name="bolt" size={12} color="var(--carbs)" style={{ marginRight: 4, display: 'inline' }} />}
+                  {e.name}
+                </span>
+                <span className="list-item__sub ellipsis">
+                  {e.quantity !== 1 ? `${fmtNum(e.quantity)} × ` : ''}{e.servingLabel}
+                  {planned && ' · planificado'}
+                  {showMacros && ` · C${fmtNum(e.nutrients.carbs)} P${fmtNum(e.nutrients.protein)} G${fmtNum(e.nutrients.fat)}`}
+                </span>
+              </div>
+              <span className="tabnum" style={{ fontWeight: 700 }}>{fmtKcal(e.nutrients.calories)}</span>
+            </button>
           </div>
-          <span className="tabnum" style={{ fontWeight: 700 }}>{fmtKcal(e.nutrients.calories)}</span>
-        </button>
-      ))}
+        )
+      })}
 
       <button className="list-item list-item--tap" style={{ color: 'var(--brand)', minHeight: 46 }}
         onClick={() => nav(`/add?date=${date}&meal=${meal}`)}>

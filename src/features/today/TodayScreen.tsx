@@ -117,9 +117,14 @@ export default function TodayScreen() {
           sub={`Meta ${fmtNum(kgToDisplay(profile.weightGoalKg, profile.units))} ${weightUnit(profile.units)}`} onClick={() => nav('/weight')} />
       </div>
 
-      <button className="btn btn--soft btn--full" style={{ marginTop: 16 }} onClick={() => nav('/diary')}>
-        <Icon name="diary" size={20} /> Ver diario completo
-      </button>
+      <div className="row gap-2" style={{ marginTop: 16 }}>
+        <button className="btn btn--soft grow" onClick={() => nav('/diary')}>
+          <Icon name="diary" size={20} /> Diario
+        </button>
+        <button className="btn btn--soft grow" onClick={() => nav('/planner')}>
+          <Icon name="calendar" size={20} /> Plan semanal
+        </button>
+      </div>
 
       <button className="fab" onClick={() => setQuickOpen(true)} aria-label="Añadir">
         <Icon name="plus" size={28} strokeWidth={2.6} />

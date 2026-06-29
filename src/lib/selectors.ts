@@ -4,14 +4,24 @@ import type {
 import { sumNutrients } from './nutrition'
 import { parseKey } from './date'
 
-/** Suma de nutrientes de una lista de entradas del diario. */
+/** Una entrada cuenta como "comida" salvo que esté marcada como planificada (done===false). */
+export function isEaten(e: FoodEntry): boolean {
+  return e.done !== false
+}
+
+/** Suma de nutrientes COMIDOS del día (excluye los planificados sin marcar). */
 export function dayTotals(entries: FoodEntry[]): Nutrients {
+  return sumNutrients(entries.filter(isEaten).map((e) => e.nutrients))
+}
+
+/** Suma de nutrientes PLANIFICADOS del día (todas las entradas, comidas o no). */
+export function dayPlannedTotals(entries: FoodEntry[]): Nutrients {
   return sumNutrients(entries.map((e) => e.nutrients))
 }
 
-/** Suma de nutrientes de una comida concreta. */
+/** Suma de nutrientes comidos de una comida concreta. */
 export function mealTotals(entries: FoodEntry[], meal: MealName): Nutrients {
-  return sumNutrients(entries.filter((e) => e.meal === meal).map((e) => e.nutrients))
+  return sumNutrients(entries.filter((e) => e.meal === meal && isEaten(e)).map((e) => e.nutrients))
 }
 
 /** Calorías quemadas por ejercicio + pasos en un día. */

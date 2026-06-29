@@ -15,11 +15,12 @@ interface Props {
   date: string
   defaultMeal: MealName
   open: boolean
+  planned?: boolean
   onClose: () => void
   onLogged?: () => void
 }
 
-export function FoodDetailSheet({ food, date, defaultMeal, open, onClose, onLogged }: Props) {
+export function FoodDetailSheet({ food, date, defaultMeal, open, planned, onClose, onLogged }: Props) {
   const toast = useUI((s) => s.toast)
   const [servingId, setServingId] = useState('')
   const [quantity, setQuantity] = useState(1)
@@ -46,8 +47,8 @@ export function FoodDetailSheet({ food, date, defaultMeal, open, onClose, onLogg
   const mp = macroPercents(nutrients)
 
   async function log() {
-    await logFood({ date, meal, food: food!, servingId: serving!.id, quantity })
-    toast(`Añadido a ${MEAL_LABELS[meal]}`, { icon: 'check' })
+    await logFood({ date, meal, food: food!, servingId: serving!.id, quantity, planned })
+    toast(planned ? `Añadido al plan · ${MEAL_LABELS[meal]}` : `Añadido a ${MEAL_LABELS[meal]}`, { icon: 'check' })
     onLogged?.()
     onClose()
   }
@@ -110,7 +111,7 @@ export function FoodDetailSheet({ food, date, defaultMeal, open, onClose, onLogg
         <NutritionLabel nutrients={nutrients} />
 
         <button className="btn btn--grad btn--full" onClick={log} style={{ marginTop: 8 }}>
-          <Icon name="plus" size={20} /> Añadir al diario
+          <Icon name="plus" size={20} /> {planned ? 'Añadir al plan' : 'Añadir al diario'}
         </button>
       </div>
     </Sheet>

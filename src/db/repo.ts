@@ -49,8 +49,9 @@ export async function logFood(args: {
   food: Food
   servingId: string
   quantity: number
+  planned?: boolean // true = se añade como planificado (no cuenta hasta marcarlo)
 }): Promise<void> {
-  const { date, meal, food, servingId, quantity } = args
+  const { date, meal, food, servingId, quantity, planned } = args
   await upsertFood(food)
   const serving = food.servings.find((s) => s.id === servingId) ?? defaultServing(food)
   const entry: FoodEntry = {
@@ -64,10 +65,16 @@ export async function logFood(args: {
     servingGrams: serving.grams,
     quantity,
     nutrients: nutrientsForServing(food, serving, quantity),
+    ...(planned ? { done: false } : {}),
     createdAt: Date.now(),
   }
   await db.foodEntries.add(entry)
   await bumpRecent(food.id)
+}
+
+/** Marca una entrada del diario como comida (done=true) o planificada (done=false). */
+export async function setEntryDone(entryId: string, done: boolean): Promise<void> {
+  await db.foodEntries.update(entryId, { done })
 }
 
 async function bumpRecent(foodId: string): Promise<void> {
@@ -140,6 +147,32 @@ export async function copyDay(fromDate: string, toDate: string): Promise<number>
   const clones = entries.map((e) => ({ ...e, id: uid('fe'), date: toDate, createdAt: Date.now() }))
   if (clones.length) await db.foodEntries.bulkAdd(clones)
   return clones.length
+}
+
+/** Copia el plan de un día (comidas + ejercicio) a otra fecha. */
+export async function copyDayPlan(fromDate: string, toDate: string): Promise<number> {
+  const foods = await db.foodEntries.where('date').equals(fromDate).toArray()
+  const exs = await db.exerciseEntries.where('date').equals(fromDate).toArray()
+  const fClones = foods.map((e) => ({ ...e, id: uid('fe'), date: toDate, createdAt: Date.now() }))
+  const eClones = exs.map((e) => ({ ...e, id: uid('ee'), date: toDate, createdAt: Date.now() }))
+  if (fClones.length) await db.foodEntries.bulkAdd(fClones)
+  if (eClones.length) await db.exerciseEntries.bulkAdd(eClones)
+  return fClones.length + eClones.length
+}
+
+/** Copia el plan de toda una semana (7 días alineados) a otra semana. */
+export async function copyWeekPlan(fromWeek: string[], toWeek: string[]): Promise<number> {
+  let n = 0
+  for (let i = 0; i < Math.min(fromWeek.length, toWeek.length); i++) {
+    n += await copyDayPlan(fromWeek[i], toWeek[i])
+  }
+  return n
+}
+
+/** Vacía el plan (comidas + ejercicio) de un día. */
+export async function clearDayPlan(date: string): Promise<void> {
+  await db.foodEntries.where('date').equals(date).delete()
+  await db.exerciseEntries.where('date').equals(date).delete()
 }
 
 export async function rememberMeal(name: string, entries: FoodEntry[]): Promise<void> {

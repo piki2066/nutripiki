@@ -107,6 +107,7 @@ export interface FoodEntry {
   quantity: number // nº de raciones
   nutrients: Nutrients // ya escalado a (servingGrams * quantity)
   isQuickAdd?: boolean
+  done?: boolean // false = planificado (no cuenta hasta marcarlo comido); undefined/true = comido
   createdAt: number
 }
 

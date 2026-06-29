@@ -20,6 +20,7 @@ const NUTRITION: Item[] = [
 ]
 
 const LOGGING: Item[] = [
+  { icon: 'calendar', title: 'Plan semanal', sub: 'Planifica comidas y deporte, y marca lo que comes', to: '/planner' },
   { icon: 'recipe', title: 'Mis recetas / Crear', sub: 'Crea una receta nueva', to: '/recipe/new' },
   { icon: 'download', title: 'Importar receta (URL)', sub: 'Desde una página web', to: '/recipe/import' },
   { icon: 'food', title: 'Crear alimento', sub: 'Añade un alimento propio', to: '/food/new' },

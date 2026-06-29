@@ -35,6 +35,7 @@ export default function AddFoodScreen() {
   const toast = useUI((s) => s.toast)
   const date = params.get('date') || todayKey()
   const meal = (params.get('meal') as MealName) || 'breakfast'
+  const planned = params.get('plan') === '1'
 
   const [tab, setTab] = useState<Tab>('all')
   const [query, setQuery] = useState('')
@@ -84,8 +85,8 @@ export default function AddFoodScreen() {
   }, [debounced, tab])
 
   async function quickLog(food: Food) {
-    await logFood({ date, meal, food, servingId: defaultServing(food).id, quantity: 1 })
-    toast(`Añadido a ${MEAL_LABELS[meal]}`, { icon: 'check' })
+    await logFood({ date, meal, food, servingId: defaultServing(food).id, quantity: 1, planned })
+    toast(planned ? `Añadido al plan · ${MEAL_LABELS[meal]}` : `Añadido a ${MEAL_LABELS[meal]}`, { icon: 'check' })
     getRecentFoods().then(setRecent)
   }
 
@@ -221,7 +222,7 @@ export default function AddFoodScreen() {
         )}
       </div>
 
-      <FoodDetailSheet food={selected} date={date} defaultMeal={meal} open={!!selected}
+      <FoodDetailSheet food={selected} date={date} defaultMeal={meal} open={!!selected} planned={planned}
         onClose={() => setSelected(null)} onLogged={() => { getRecentFoods().then(setRecent) }} />
       <QuickAddSheet open={quickOpen} onClose={() => setQuickOpen(false)} date={date} defaultMeal={meal} />
       <BarcodeScanner open={scanOpen} onClose={() => setScanOpen(false)} onDetected={onBarcode} />
