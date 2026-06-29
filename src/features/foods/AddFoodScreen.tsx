@@ -11,7 +11,7 @@ import { db } from '@/db/db'
 import type { Food, MealName } from '@/db/types'
 import { MEAL_LABELS } from '@/db/types'
 import { logFood, defaultServing, getRecentFoods, getFrequentFoods, recipeToFood } from '@/db/repo'
-import { searchOff, lookupBarcode } from '@/lib/off'
+import { searchOff, lookupBarcode, isStoreInternalBarcode } from '@/lib/off'
 import { normalize, scoreMatch } from '@/lib/search'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useRecipes, useSavedMeals, useCustomFoods } from '@/hooks/useData'
@@ -91,13 +91,22 @@ export default function AddFoodScreen() {
 
   async function onBarcode(code: string) {
     setScanOpen(false)
-    toast('Buscando producto…')
-    // primero en local
+    // 1) ¿ya está en local (incluye productos creados antes con este código)?
     const local = await db.foods.where('barcode').equals(code).first()
     if (local) { setSelected(local); return }
+    // 2) código interno del súper: no tiene sentido buscarlo en la red
+    if (isStoreInternalBarcode(code)) {
+      toast('Código interno del súper: créalo una vez y lo recordaré', { icon: 'info' })
+      nav(`/food/new?barcode=${encodeURIComponent(code)}`)
+      return
+    }
+    // 3) buscar en OpenFoodFacts
+    toast('Buscando producto…')
     const found = await lookupBarcode(code)
-    if (found) setSelected(found)
-    else toast('Producto no encontrado en la base de datos', { icon: 'info' })
+    if (found) { setSelected(found); return }
+    // 4) no está en ningún sitio: crear y recordar el código
+    toast('No está en la base: créalo y lo recordaré', { icon: 'info' })
+    nav(`/food/new?barcode=${encodeURIComponent(code)}`)
   }
 
   const list: Food[] = useMemo(() => {

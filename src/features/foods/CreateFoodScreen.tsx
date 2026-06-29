@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AppHeader } from '@/components/AppHeader'
 import { Icon } from '@/components/Icon'
 import { upsertFood } from '@/db/repo'
@@ -29,10 +29,11 @@ const FIELDS: FieldDef[] = [
 
 export default function CreateFoodScreen() {
   const nav = useNavigate()
+  const [params] = useSearchParams()
   const toast = useUI((s) => s.toast)
-  const [name, setName] = useState('')
+  const [name, setName] = useState(params.get('name') ?? '')
   const [brand, setBrand] = useState('')
-  const [barcode, setBarcode] = useState('')
+  const [barcode, setBarcode] = useState(params.get('barcode') ?? '')
   const [servingLabel, setServingLabel] = useState('1 ración')
   const [servingGrams, setServingGrams] = useState('100')
   const [isLiquid, setIsLiquid] = useState(false)
