@@ -6,7 +6,8 @@ import type {
 } from './types'
 
 /**
- * Base de datos local (IndexedDB) de NutriPal.
+ * Base de datos local (IndexedDB) de NutriPiki.
+ * (El nombre del store sigue siendo 'nutripal' a propósito: cambiarlo borraría los datos.)
  * Todo vive en el dispositivo del usuario: 100% privado y offline.
  */
 export class NutriPalDB extends Dexie {

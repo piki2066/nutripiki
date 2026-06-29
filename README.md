@@ -1,4 +1,4 @@
-# 🥗 NutriPal — tu MyFitnessPal personal (100% local)
+# NutriPiki — tu MyFitnessPal personal (100% local)
 
 > ### 📲 App en vivo: **https://piki2066.github.io/nutripal/**
 > Ábrela en **Safari (iPhone)** → Compartir → **Añadir a pantalla de inicio**. Funciona **offline** y con el Mac apagado. También funciona en el Mac desde esa misma URL.
@@ -49,7 +49,7 @@ Tienes el iPhone y el Mac en la **misma red WiFi**. Hay dos caminos:
 1. En el Mac: `npm run build && npm run preview`
 2. El comando imprime una línea **Network:** algo como `http://192.168.1.67:4173/`. Esa es la dirección de tu Mac en la WiFi.
 3. En el **iPhone**, abre esa dirección en **Safari**.
-4. Pulsa el botón **Compartir** → **Añadir a pantalla de inicio**. Tendrás el icono de NutriPal y se abrirá a pantalla completa como una app.
+4. Pulsa el botón **Compartir** → **Añadir a pantalla de inicio**. Tendrás el icono de NutriPiki y se abrirá a pantalla completa como una app.
 
    *Tus datos se guardan en el iPhone.* En este modo la app necesita que el Mac esté encendido y sirviendo (no es offline puro, porque iOS no activa el modo offline sobre HTTP en red local).
 
@@ -61,7 +61,7 @@ Para que funcione **siempre y sin conexión** en el iPhone, iOS exige **HTTPS**.
 - o **Vercel**: `npx vercel --prod` dentro de la carpeta del proyecto.
 - o **Cloudflare Pages / GitHub Pages**.
 
-Luego, en el iPhone: abre la URL `https://…` en Safari → **Compartir → Añadir a pantalla de inicio**. Ya tienes NutriPal instalada, **offline y autónoma**; tus datos siguen viviendo solo en tu iPhone.
+Luego, en el iPhone: abre la URL `https://…` en Safari → **Compartir → Añadir a pantalla de inicio**. Ya tienes NutriPiki instalada, **offline y autónoma**; tus datos siguen viviendo solo en tu iPhone.
 
 > Solo se publica el “armazón” de la app (HTML/CSS/JS). **Ningún dato tuyo** se sube: el diario, el peso y las fotos se quedan en IndexedDB de tu teléfono.
 

@@ -1,5 +1,5 @@
 // ============================================================================
-//  NutriPal — Tipos del dominio
+//  NutriPiki — Tipos del dominio
 //  Modelo de datos completo inspirado en MyFitnessPal (todas las funciones).
 // ============================================================================
 
