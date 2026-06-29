@@ -7,6 +7,7 @@ import { WeightSheet } from './WeightSheet'
 import { useProfile, useWeights } from '@/hooks/useData'
 import { deleteWeight } from '@/db/repo'
 import { latestWeight } from '@/lib/selectors'
+import { weightTrend, latestTrend, trendRatePerWeek, goalEta } from '@/lib/analytics'
 import { kgToDisplay, weightUnit } from '@/lib/units'
 import { fmtNum, fmtSigned } from '@/lib/format'
 import { todayKey, parseKey } from '@/lib/date'
@@ -37,6 +38,17 @@ export default function WeightScreen() {
     label: format(parseKey(w.date), 'd MMM', { locale: es }),
     value: kgToDisplay(w.weightKg, u),
   }))
+
+  // Tendencia (EMA) sobre el histórico completo, alineada al rango mostrado.
+  const trendAll = weightTrend(sorted)
+  const trendMap = new Map(trendAll.map((t) => [t.date, t.trend]))
+  const trendPoints: Point[] = filtered.map((w) => ({
+    label: '',
+    value: trendMap.has(w.date) ? kgToDisplay(trendMap.get(w.date)!, u) : null,
+  }))
+  const currentTrendKg = latestTrend(trendAll) ?? current
+  const ratePerWeek = trendRatePerWeek(trendAll)
+  const eta = goalEta(currentTrendKg, goal, ratePerWeek ?? 0, todayKey())
 
   const totalToLose = Math.abs(start - goal)
   const doneToGoal = Math.abs(start - current)
@@ -76,7 +88,12 @@ export default function WeightScreen() {
               {fmtNum(Math.abs(kgToDisplay(toGoal, u)))} {weightUnit(u)} {toGoal > 0 ? 'para la meta' : '¡meta alcanzada!'}
             </span>
           </div>
-          <LineChart data={points} goal={kgToDisplay(goal, u)} color="var(--brand)" height={200} unit={weightUnit(u)} />
+          <LineChart data={points} series2={trendPoints} series2Color="var(--text-2)"
+            goal={kgToDisplay(goal, u)} color="var(--brand)" height={200} unit={weightUnit(u)} />
+          <div className="row gap-3" style={{ marginTop: 6, justifyContent: 'center' }}>
+            <span className="cap dim"><span style={{ color: 'var(--brand)' }}>●</span> Registros</span>
+            <span className="cap dim"><span style={{ color: 'var(--text-2)' }}>┄</span> Tendencia</span>
+          </div>
           <div style={{ marginTop: 10 }}>
             <Segmented value={range} onChange={setRange} options={[
               { value: '30', label: '30d' }, { value: '90', label: '90d' }, { value: '365', label: '1a' }, { value: 'all', label: 'Todo' },
@@ -85,6 +102,40 @@ export default function WeightScreen() {
         </div>
       ) : (
         <EmptyState icon="scale" title="Registra tu peso" sub="Con 2 o más registros verás tu tendencia." />
+      )}
+
+      {/* Tendencia y previsión de meta */}
+      {weights.length >= 3 && (
+        <div className="card col gap-3" style={{ marginBottom: 14 }}>
+          <div className="row between">
+            <span className="h3">Tendencia y previsión</span>
+            <Icon name="target" size={18} color="var(--brand)" />
+          </div>
+          <div className="row between">
+            <div className="col" style={{ gap: 2 }}>
+              <span className="label" style={{ margin: 0 }}>Peso de tendencia</span>
+              <span className="big-num" style={{ fontSize: 22 }}>{fmtNum(kgToDisplay(currentTrendKg, u))} <span className="muted" style={{ fontSize: 13 }}>{weightUnit(u)}</span></span>
+            </div>
+            <div className="col" style={{ gap: 2, alignItems: 'flex-end' }}>
+              <span className="label" style={{ margin: 0 }}>Ritmo</span>
+              <span className="big-num" style={{ fontSize: 22, color: ratePerWeek == null ? 'var(--text-3)' : 'var(--brand)' }}>
+                {ratePerWeek == null ? '—' : `${fmtSigned(kgToDisplay(ratePerWeek, u))}`} <span className="muted" style={{ fontSize: 13 }}>{weightUnit(u)}/sem</span>
+              </span>
+            </div>
+          </div>
+          <div className="row gap-2" style={{ alignItems: 'center', borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
+            <Icon name="calendar" size={18} color="var(--brand)" />
+            <span className="cap">
+              {ratePerWeek == null
+                ? 'Registra tu peso unos días para ver la previsión.'
+                : eta.reachable && eta.date
+                  ? <>Llegarás a {fmtNum(kgToDisplay(goal, u))} {weightUnit(u)} ≈ <b>{format(parseKey(eta.date), "d 'de' MMM yyyy", { locale: es })}</b></>
+                  : eta.reachable
+                    ? 'Meta alcanzable, pero muy lejana al ritmo actual.'
+                    : 'Tu tendencia no avanza hacia la meta todavía.'}
+            </span>
+          </div>
+        </div>
       )}
 
       <div className="section-title">Historial</div>

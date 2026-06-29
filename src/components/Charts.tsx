@@ -7,13 +7,15 @@ export interface Point {
 
 /** Gráfica de líneas con área y puntos. Maneja valores nulos (huecos). */
 export function LineChart({
-  data, color = 'var(--brand)', height = 200, goal, unit = '',
+  data, color = 'var(--brand)', height = 200, goal, unit = '', series2, series2Color = 'var(--text-2)',
 }: {
   data: Point[]
   color?: string
   height?: number
   goal?: number
   unit?: string
+  series2?: Point[] // línea de tendencia opcional (mismo eje X que data)
+  series2Color?: string
 }) {
   const W = 320
   const H = height
@@ -22,10 +24,12 @@ export function LineChart({
   const padT = 12
   const padR = 8
 
-  const { path, area, dots, min, max, scaleY, scaleX } = useMemo(() => {
+  const { path, area, dots, trendPath, min, max, scaleY, scaleX } = useMemo(() => {
     const vals = data.map((d) => d.value).filter((v): v is number => v != null)
-    let mn = Math.min(...(goal != null ? [...vals, goal] : vals), Infinity)
-    let mx = Math.max(...(goal != null ? [...vals, goal] : vals), -Infinity)
+    const tvals = (series2 ?? []).map((d) => d.value).filter((v): v is number => v != null)
+    const allVals = [...vals, ...tvals]
+    let mn = Math.min(...(goal != null ? [...allVals, goal] : allVals), Infinity)
+    let mx = Math.max(...(goal != null ? [...allVals, goal] : allVals), -Infinity)
     if (!vals.length) { mn = 0; mx = 1 }
     if (mn === mx) { mn -= 1; mx += 1 }
     const range = mx - mn
@@ -45,8 +49,17 @@ export function LineChart({
     const a = valid.length
       ? `M${valid[0].x} ${H - padB} ` + valid.map((pt) => `L${pt.x} ${pt.y}`).join(' ') + ` L${valid[valid.length - 1].x} ${H - padB} Z`
       : ''
-    return { path: p, area: a, dots: valid, min: mn, max: mx, scaleY: sy, scaleX: sx }
-  }, [data, goal, H])
+    // Línea de tendencia opcional (sin área ni puntos)
+    const tpts = (series2 ?? []).map((d, i) => (d.value == null ? null : { x: sx(i), y: sy(d.value) }))
+    let tp = ''
+    let tstarted = false
+    tpts.forEach((pt) => {
+      if (!pt) { tstarted = false; return }
+      tp += `${tstarted ? 'L' : 'M'}${pt.x.toFixed(1)} ${pt.y.toFixed(1)} `
+      tstarted = true
+    })
+    return { path: p, area: a, dots: valid, trendPath: tp, min: mn, max: mx, scaleY: sy, scaleX: sx }
+  }, [data, goal, H, series2])
 
   const ticks = [max, (max + min) / 2, min]
 
@@ -63,6 +76,7 @@ export function LineChart({
       {goal != null && <line className="chart-goal" x1={padL} x2={W - padR} y1={scaleY(goal)} y2={scaleY(goal)} />}
       {area && <path className="chart-area" d={area} fill={color} />}
       <path className="chart-line" d={path} stroke={color} />
+      {trendPath && <path d={trendPath} stroke={series2Color} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeDasharray="1 5" opacity={0.9} />}
       {dots.map((d, i) => (
         <circle key={i} className="chart-dot" cx={d.x} cy={d.y} r={3.5} fill={color} />
       ))}
