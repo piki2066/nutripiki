@@ -12,7 +12,7 @@ import {
 } from '@/hooks/useData'
 import { dayTotals, exerciseCalories, calorieSummary } from '@/lib/selectors'
 import { DEFAULT_MEALS, type FoodEntry } from '@/db/types'
-import { saveNote } from '@/db/repo'
+import { saveNote, copyDay } from '@/db/repo'
 import { fmtKcal, fmtNum } from '@/lib/format'
 import { useUI } from '@/lib/store'
 import { friendlyDate, shiftKey, todayKey } from '@/lib/date'
@@ -21,6 +21,7 @@ export default function DiaryScreen() {
   const nav = useNavigate()
   const date = useUI((s) => s.currentDate)
   const setDate = useUI((s) => s.setCurrentDate)
+  const toast = useUI((s) => s.toast)
   const profile = useProfile()
   const settings = useSettings()
   const entries = useDayEntries(date) ?? []
@@ -88,6 +89,17 @@ export default function DiaryScreen() {
           <Macro label="Grasa" v={totals.fat} g={profile.macros.fatG} color="var(--fat)" />
         </div>
       </div>
+
+      {/* Copiar de ayer cuando el día está vacío */}
+      {entries.length === 0 && (
+        <button className="btn btn--soft btn--full" style={{ marginBottom: 12 }}
+          onClick={async () => {
+            const n = await copyDay(shiftKey(date, -1), date)
+            toast(n ? `${n} alimentos copiados de ayer` : 'Ayer no tiene registros', { icon: n ? 'check' : 'info' })
+          }}>
+          <Icon name="copy" size={18} /> Copiar comidas de ayer
+        </button>
+      )}
 
       {/* Comidas */}
       {DEFAULT_MEALS.map((m) => (

@@ -14,6 +14,22 @@ import { useActiveFast } from '@/hooks/useData'
 
 const HOUR_MS = 3_600_000
 
+/** Fases del ayuno por horas transcurridas (orientativo, educativo). */
+interface FastPhase { h: number; name: string; desc: string }
+const FAST_PHASES: FastPhase[] = [
+  { h: 0, name: 'Digestión', desc: 'Procesando la última comida' },
+  { h: 4, name: 'Glucosa a la baja', desc: 'Empiezas a usar reservas' },
+  { h: 12, name: 'Quema de grasa', desc: 'El cuerpo tira de la grasa' },
+  { h: 16, name: 'Cetosis ligera', desc: 'Producción de cetonas' },
+  { h: 18, name: 'Autofagia', desc: 'Reciclaje celular' },
+  { h: 24, name: 'Ayuno profundo', desc: 'Máxima quema y autofagia' },
+]
+function phaseAt(hours: number): FastPhase {
+  let cur = FAST_PHASES[0]
+  for (const p of FAST_PHASES) if (hours >= p.h) cur = p
+  return cur
+}
+
 interface FastingPlan {
   name: string
   fast: number // horas de ayuno
@@ -168,6 +184,8 @@ function ActiveFast({ session, now, onEnd }: { session: FastingSession; now: num
         </div>
       </div>
 
+      <FastPhases hours={elapsedHours} />
+
       <button className="btn btn--grad btn--full" onClick={onEnd}>
         <Icon name="check-circle" size={20} /> Terminar ayuno
       </button>
@@ -237,6 +255,43 @@ function HistoryRow({ session }: { session: FastingSession }) {
         </Pill>
       }
     />
+  )
+}
+
+function FastPhases({ hours }: { hours: number }) {
+  const cur = phaseAt(hours)
+  const milestones = FAST_PHASES.filter((p) => p.h > 0)
+  return (
+    <div className="card col gap-3" style={{ marginBottom: 14 }}>
+      <div className="row between">
+        <div className="row gap-2" style={{ alignItems: 'center' }}>
+          <Icon name="flame" size={18} color="var(--brand)" fill />
+          <div className="col" style={{ alignItems: 'flex-start' }}>
+            <span className="h3">{cur.name}</span>
+            <span className="cap dim">{cur.desc}</span>
+          </div>
+        </div>
+        <span className="badge badge--soft tabnum">{Math.floor(hours)}h</span>
+      </div>
+      <div className="row between" style={{ gap: 6 }}>
+        {milestones.map((p) => {
+          const reached = hours >= p.h
+          return (
+            <div key={p.h} className="col center-all" style={{ flex: 1, gap: 4 }}>
+              <div className="center-all" style={{
+                width: 32, height: 32, borderRadius: 999,
+                background: reached ? 'color-mix(in srgb, var(--brand) 22%, transparent)' : 'var(--fill)',
+                color: reached ? 'var(--brand)' : 'var(--text-3)', fontWeight: 700, fontSize: 11,
+              }}>
+                {p.h}h
+              </div>
+              <span className="cap dim" style={{ fontSize: 9.5, textAlign: 'center', lineHeight: 1.15 }}>{p.name}</span>
+            </div>
+          )
+        })}
+      </div>
+      <p className="cap dim" style={{ fontSize: 11 }}>Las fases son orientativas y varían según la persona.</p>
+    </div>
   )
 }
 
