@@ -9,17 +9,12 @@
       <stop offset="0" stop-color="#23252e"/>
       <stop offset="1" stop-color="#141519"/>
     </radialGradient>
-    <filter id="glow" x="-90%" y="-90%" width="280%" height="280%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="26" result="b1"/>
-      <feFlood flood-color="#c8a96a" flood-opacity="0.55"/>
-      <feComposite in2="b1" operator="in" result="g1"/>
-      <feGaussianBlur in="SourceAlpha" stdDeviation="12" result="b2"/>
-      <feFlood flood-color="#eaddb0" flood-opacity="0.8"/>
-      <feComposite in2="b2" operator="in" result="g2"/>
+    <filter id="glow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="18" result="b"/>
+      <feFlood flood-color="#c8a96a" flood-opacity="0.3"/>
+      <feComposite in2="b" operator="in" result="g"/>
       <feMerge>
-        <feMergeNode in="g1"/>
-        <feMergeNode in="g1"/>
-        <feMergeNode in="g2"/>
+        <feMergeNode in="g"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
