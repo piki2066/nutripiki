@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { AppHeader } from '@/components/AppHeader'
 import { Icon } from '@/components/Icon'
+import { Wordmark } from '@/components/Wordmark'
 import { Ring } from '@/components/Ring'
 import { MacroBar } from '@/components/ui'
 import {
@@ -50,8 +51,8 @@ export default function TodayScreen() {
   return (
     <div className="screen">
       <AppHeader
-        center={<div className="col" style={{ flex: 1 }}>
-          <span className="appbar__title">Hoy</span>
+        center={<div className="row center" style={{ flex: 1 }}>
+          <Wordmark size="sm" />
         </div>}
         trailing={
           streak > 0 ? (

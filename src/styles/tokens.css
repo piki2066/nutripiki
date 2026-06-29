@@ -1,22 +1,23 @@
 /* ==========================================================================
-   NutriPal — Design tokens
-   Tema iOS-like. Oscuro por defecto, con variante clara.
+   NutriPiki — Design tokens
+   Estética premium: negro mate, blanco mármol, gris elegante y acento champán.
+   Oscuro por defecto, con variante clara (mármol).
    ========================================================================== */
 :root {
-  /* Marca */
-  --brand: #0a84ff;
-  --brand-2: #34c759;
-  --brand-grad: linear-gradient(135deg, #0a84ff 0%, #5e5ce6 100%);
+  /* Marca — acento champán/oro sobrio (look de lujo) */
+  --brand: #c8a96a;
+  --brand-2: #7bbf9e; /* verde sobrio (ejercicio / positivo) */
+  --brand-grad: linear-gradient(135deg, #e3ce9d 0%, #b8945a 100%);
 
-  /* Macros (consistentes en toda la app) */
-  --carbs: #f5a623; /* carbohidratos */
-  --protein: #ff6b6b; /* proteína */
-  --fat: #4cd2c0; /* grasa */
-  --cal: #0a84ff; /* calorías */
+  /* Macros (consistentes en toda la app, tonos atenuados elegantes) */
+  --carbs: #d4a860; /* carbohidratos */
+  --protein: #d98a82; /* proteína */
+  --fat: #74b8ad; /* grasa */
+  --cal: #c8a96a; /* calorías */
 
-  --good: #34c759;
-  --warn: #ff9f0a;
-  --bad: #ff453a;
+  --good: #7bbf9e;
+  --warn: #d6a45a;
+  --bad: #d9695f;
 
   /* Tipografía */
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
@@ -47,43 +48,46 @@
   --maxw: 720px;
 }
 
-/* ---- Tema oscuro (por defecto) ---- */
+/* ---- Tema oscuro: negro mate + blanco mármol (por defecto) ---- */
 :root,
 [data-theme='dark'] {
-  --bg: #0b0f14;
-  --bg-elev: #131922;
-  --bg-elev-2: #1b2330;
-  --card: #151c26;
-  --card-2: #1d2632;
-  --hairline: rgba(255, 255, 255, 0.08);
-  --hairline-strong: rgba(255, 255, 255, 0.14);
-  --text: #f2f5f9;
-  --text-2: #9aa7b8;
-  --text-3: #67768a;
-  --fill: rgba(255, 255, 255, 0.06);
-  --fill-2: rgba(255, 255, 255, 0.1);
-  --shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-  --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.35);
-  --backdrop: rgba(0, 0, 0, 0.55);
+  --bg: #0a0a0b;
+  --bg-elev: #121214;
+  --bg-elev-2: #1a1a1d;
+  --card: #141416;
+  --card-2: #1d1d20;
+  --hairline: rgba(255, 255, 255, 0.07);
+  --hairline-strong: rgba(255, 255, 255, 0.13);
+  --text: #f1efe9; /* blanco mármol (cálido) */
+  --text-2: #a7a39a;
+  --text-3: #6e6b64;
+  --fill: rgba(255, 255, 255, 0.05);
+  --fill-2: rgba(255, 255, 255, 0.09);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.42);
+  --backdrop: rgba(0, 0, 0, 0.62);
   color-scheme: dark;
 }
 
-/* ---- Tema claro ---- */
+/* ---- Tema claro: blanco mármol ---- */
 [data-theme='light'] {
-  --bg: #f2f4f7;
+  --brand: #9c7b40; /* oro más oscuro para contraste sobre claro */
+  --brand-grad: linear-gradient(135deg, #c5a567 0%, #9c7b40 100%);
+  --cal: #9c7b40;
+  --bg: #f3f1ea;
   --bg-elev: #ffffff;
   --bg-elev-2: #ffffff;
   --card: #ffffff;
-  --card-2: #f6f8fb;
+  --card-2: #f7f4ee;
   --hairline: rgba(0, 0, 0, 0.08);
   --hairline-strong: rgba(0, 0, 0, 0.14);
-  --text: #0c1320;
-  --text-2: #5b6776;
-  --text-3: #8a97a6;
-  --fill: rgba(0, 0, 0, 0.05);
+  --text: #1b1813;
+  --text-2: #5d574c;
+  --text-3: #8d877b;
+  --fill: rgba(0, 0, 0, 0.045);
   --fill-2: rgba(0, 0, 0, 0.08);
-  --shadow: 0 12px 30px rgba(20, 30, 50, 0.12);
-  --shadow-sm: 0 4px 14px rgba(20, 30, 50, 0.08);
-  --backdrop: rgba(0, 0, 0, 0.35);
+  --shadow: 0 14px 34px rgba(40, 33, 20, 0.12);
+  --shadow-sm: 0 5px 16px rgba(40, 33, 20, 0.09);
+  --backdrop: rgba(0, 0, 0, 0.4);
   color-scheme: light;
 }

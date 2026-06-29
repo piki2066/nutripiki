@@ -33,7 +33,7 @@ export async function exportDiaryCsv(days = 30): Promise<void> {
     const nutr = NUTRIENT_META.map((m) => Math.round(((e.nutrients[m.key] ?? 0) as number) * 10) / 10)
     lines.push([...base, ...nutr].map(csvCell).join(','))
   }
-  downloadText(`nutripal-diario-${dates.size}d.csv`, lines.join('\n'))
+  downloadText(`nutripiki-diario-${dates.size}d.csv`, lines.join('\n'))
 }
 
 /** Exporta historial de peso y medidas. */
@@ -43,5 +43,5 @@ export async function exportProgressCsv(): Promise<void> {
   const lines = ['Tipo,Fecha,Valor']
   for (const w of weights) lines.push(['Peso (kg)', w.date, w.weightKg].map(csvCell).join(','))
   for (const m of measurements) lines.push([m.type, m.date, m.value].map(csvCell).join(','))
-  downloadText('nutripal-progreso.csv', lines.join('\n'))
+  downloadText('nutripiki-progreso.csv', lines.join('\n'))
 }

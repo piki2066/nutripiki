@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '@/components/Icon'
+import { Wordmark, BrandEmblem } from '@/components/Wordmark'
 import { Segmented } from '@/components/ui'
 import { buildProfile, type ProfileInput } from '@/lib/profile'
 import { saveProfile, addWeight } from '@/db/repo'
@@ -67,10 +68,14 @@ export default function OnboardingScreen() {
       )}
 
       {step === 0 && (
-        <div className="col" style={{ minHeight: '70vh', justifyContent: 'center', textAlign: 'center', gap: 18 }}>
-          <div style={{ fontSize: 64 }}>🥗</div>
-          <h1 className="h1">NutriPal</h1>
-          <p className="muted" style={{ fontSize: 17, maxWidth: 340, margin: '0 auto' }}>
+        <div className="col" style={{ minHeight: '70vh', justifyContent: 'center', textAlign: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}><BrandEmblem size={84} /></div>
+          <Wordmark size="lg" style={{ alignSelf: 'center', marginTop: 4 }} />
+          <div style={{ width: 44, height: 1, background: 'color-mix(in srgb, var(--brand) 60%, transparent)', margin: '2px auto' }} />
+          <p className="cap" style={{ letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-3)', fontSize: 11 }}>
+            Edición premium · 100% privada
+          </p>
+          <p className="muted" style={{ fontSize: 17, maxWidth: 340, margin: '4px auto 0' }}>
             Tu diario de calorías, macros, peso y ejercicio. Privado y 100% en tu dispositivo.
           </p>
           <div className="col gap-2" style={{ marginTop: 12 }}>
@@ -213,7 +218,7 @@ export default function OnboardingScreen() {
       <div className="col gap-2" style={{ marginTop: 28 }}>
         {step === STEPS.length - 1 ? (
           <button className="btn btn--grad btn--full" onClick={finish}>
-            Empezar a usar NutriPal
+            Empezar a usar NutriPiki
           </button>
         ) : (
           <button className="btn btn--primary btn--full" onClick={next} disabled={!canNext()}>

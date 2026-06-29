@@ -8,7 +8,7 @@ import { EMPTY_NUTRIENTS } from '@/db/types'
 import { uid } from './id'
 
 const BASE = 'https://world.openfoodfacts.org'
-const UA = 'NutriPal/1.0 (PWA local de nutrición)'
+const UA = 'NutriPiki/1.0 (PWA local de nutrición)'
 
 function num(v: unknown): number {
   const n = typeof v === 'string' ? parseFloat(v) : (v as number)

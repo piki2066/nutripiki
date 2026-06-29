@@ -10,7 +10,8 @@ import { useUI } from '@/lib/store'
 import { todayKey } from '@/lib/date'
 import type { AppSettings } from '@/db/types'
 
-const ACCENTS = ['#0a84ff', '#34c759', '#ff375f', '#ff9f0a', '#5e5ce6', '#ff2d55']
+// Acentos premium: champán, oro viejo, bronce, esmeralda, grafito, burdeos.
+const ACCENTS = ['#c8a96a', '#b0894f', '#a9745a', '#6fae8e', '#8a8f98', '#9e5d63']
 
 export default function SettingsScreen() {
   const settings = useSettings()
@@ -33,7 +34,7 @@ export default function SettingsScreen() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `nutripal-backup-${todayKey()}.json`
+      a.download = `nutripiki-backup-${todayKey()}.json`
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -177,7 +178,7 @@ export default function SettingsScreen() {
       {/* Acerca de */}
       <div className="section-title">Acerca de</div>
       <div className="card col gap-1">
-        <span className="h3">NutriPal 1.0</span>
+        <span className="h3">NutriPiki 1.0</span>
         <span className="cap dim">100% local y privado. Tus datos nunca salen de este dispositivo.</span>
       </div>
 

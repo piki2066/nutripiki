@@ -6,7 +6,7 @@ import type { AppSettings } from './types'
 export const DEFAULT_SETTINGS: AppSettings = {
   id: 'app',
   theme: 'dark',
-  accent: '#0a84ff',
+  accent: '#c8a96a',
   remindersEnabled: false,
   reminderTimes: {},
   showMicros: true,
@@ -63,6 +63,21 @@ export async function topUpSeeds(): Promise<void> {
  * Añade los ejercicios del catálogo que falten (p. ej. artes marciales nuevas)
  * a instalaciones ya existentes. Dedup por nombre normalizado. Idempotente.
  */
+// Acentos del tema anterior (azul iOS y compañía): se migran al champán premium.
+const OLD_ACCENTS = new Set(['#0a84ff', '#34c759', '#ff375f', '#ff9f0a', '#5e5ce6', '#ff2d55'])
+
+/** Migra el acento del tema viejo al nuevo champán (rebrand NutriPiki). Una sola vez. */
+export async function migrateTheme(): Promise<void> {
+  try {
+    const s = await db.settings.get('app')
+    if (s && OLD_ACCENTS.has((s.accent || '').toLowerCase())) {
+      await db.settings.update('app', { accent: '#c8a96a' })
+    }
+  } catch (e) {
+    console.error('migrateTheme', e)
+  }
+}
+
 export async function topUpExercises(): Promise<void> {
   try {
     const defs = await db.exerciseDefs.toArray()
