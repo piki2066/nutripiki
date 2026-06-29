@@ -28,7 +28,7 @@ Diario de **calorías, macros, micronutrientes, peso, medidas, ejercicio, agua y
 ## 🚀 Probarla ahora (en el Mac, 30 segundos)
 
 ```bash
-cd ~/NutriPal
+cd ~/Documents/Claude/Agentes/nutripal
 npm install        # solo la primera vez
 npm run build
 npm run preview
