@@ -12,6 +12,8 @@ export interface Toast {
 interface UIState {
   currentDate: string
   setCurrentDate: (d: string) => void
+  copiedDate: string | null // día "copiado" para pegar sus comidas en otro
+  setCopiedDate: (d: string | null) => void
   quickOpen: boolean
   setQuickOpen: (v: boolean) => void
   toasts: Toast[]
@@ -22,6 +24,8 @@ interface UIState {
 export const useUI = create<UIState>((set, get) => ({
   currentDate: todayKey(),
   setCurrentDate: (d) => set({ currentDate: d }),
+  copiedDate: null,
+  setCopiedDate: (d) => set({ copiedDate: d }),
   quickOpen: false,
   setQuickOpen: (v) => set({ quickOpen: v }),
   toasts: [],

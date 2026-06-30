@@ -105,6 +105,20 @@ export default function TodayScreen() {
         </div>
       </div>
 
+      {/* Plan semanal (acceso destacado) */}
+      <button className="card card--tap row between" style={{ width: '100%', marginBottom: 14 }} onClick={() => nav('/planner')}>
+        <div className="row gap-3">
+          <div className="center-all" style={{ width: 40, height: 40, borderRadius: 11, background: 'color-mix(in srgb, var(--brand) 18%, transparent)' }}>
+            <Icon name="calendar" size={22} color="var(--brand)" />
+          </div>
+          <div className="col" style={{ alignItems: 'flex-start' }}>
+            <span className="h3">Plan semanal</span>
+            <span className="cap dim">Planifica tus comidas y deporte</span>
+          </div>
+        </div>
+        <Icon name="chevron-right" size={20} color="var(--text-3)" />
+      </button>
+
       {/* Tarjetas rápidas */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <QuickCard icon="water" color="var(--brand)" title="Agua" value={`${fmtNum(waterMl / 1000)} L`}
@@ -117,14 +131,9 @@ export default function TodayScreen() {
           sub={`Meta ${fmtNum(kgToDisplay(profile.weightGoalKg, profile.units))} ${weightUnit(profile.units)}`} onClick={() => nav('/weight')} />
       </div>
 
-      <div className="row gap-2" style={{ marginTop: 16 }}>
-        <button className="btn btn--soft grow" onClick={() => nav('/diary')}>
-          <Icon name="diary" size={20} /> Diario
-        </button>
-        <button className="btn btn--soft grow" onClick={() => nav('/planner')}>
-          <Icon name="calendar" size={20} /> Plan semanal
-        </button>
-      </div>
+      <button className="btn btn--soft btn--full" style={{ marginTop: 16 }} onClick={() => nav('/diary')}>
+        <Icon name="diary" size={20} /> Ver diario completo
+      </button>
 
       <button className="fab" onClick={() => setQuickOpen(true)} aria-label="Añadir">
         <Icon name="plus" size={28} strokeWidth={2.6} />

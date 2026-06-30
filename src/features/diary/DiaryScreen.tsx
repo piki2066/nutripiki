@@ -22,6 +22,8 @@ export default function DiaryScreen() {
   const date = useUI((s) => s.currentDate)
   const setDate = useUI((s) => s.setCurrentDate)
   const toast = useUI((s) => s.toast)
+  const copiedDate = useUI((s) => s.copiedDate)
+  const setCopiedDate = useUI((s) => s.setCopiedDate)
   const profile = useProfile()
   const settings = useSettings()
   const entries = useDayEntries(date) ?? []
@@ -89,6 +91,25 @@ export default function DiaryScreen() {
           <Macro label="Grasa" v={totals.fat} g={profile.macros.fatG} color="var(--fat)" />
         </div>
       </div>
+
+      {/* Copiar / pegar día */}
+      {(entries.length > 0 || (copiedDate && copiedDate !== date)) && (
+        <div className="row gap-2" style={{ marginBottom: 12 }}>
+          {entries.length > 0 && (
+            <button className="btn btn--soft btn--sm grow" onClick={() => { setCopiedDate(date); toast('Día copiado · abre otro día y pulsa Pegar', { icon: 'check' }) }}>
+              <Icon name="copy" size={16} /> Copiar día
+            </button>
+          )}
+          {copiedDate && copiedDate !== date && (
+            <button className="btn btn--soft btn--sm grow" onClick={async () => {
+              const n = await copyDay(copiedDate, date)
+              toast(n ? `${n} comidas pegadas de ${friendlyDate(copiedDate)}` : 'Ese día no tenía comidas', { icon: n ? 'check' : 'info' })
+            }}>
+              <Icon name="download" size={16} /> Pegar de {friendlyDate(copiedDate)}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Copiar de ayer cuando el día está vacío */}
       {entries.length === 0 && (
