@@ -7,6 +7,9 @@ interface Props {
   food: Food
   onOpen: () => void
   onQuickAdd: () => void
+  saved?: boolean
+  onToggleSave?: () => void
+  onDelete?: () => void
 }
 
 const NUTRI_COLORS: Record<string, string> = {
@@ -32,7 +35,7 @@ export function NutriScoreBadge({ grade }: { grade: string }) {
 }
 
 /** Fila de resultado de búsqueda de alimento. */
-export function FoodRow({ food, onOpen, onQuickAdd }: Props) {
+export function FoodRow({ food, onOpen, onQuickAdd, saved, onToggleSave, onDelete }: Props) {
   const sv = defaultServing(food)
   const n = nutrientsForServing(food, sv, 1)
   return (
@@ -54,6 +57,16 @@ export function FoodRow({ food, onOpen, onQuickAdd }: Props) {
           C {fmtNum(n.carbs)}g · P {fmtNum(n.protein)}g · G {fmtNum(n.fat)}g
         </span>
       </div>
+      {onDelete && (
+        <button className="icon-btn" onClick={(e) => { e.stopPropagation(); onDelete() }} aria-label="Borrar alimento">
+          <Icon name="trash" size={20} color="var(--text-3)" />
+        </button>
+      )}
+      {onToggleSave && (
+        <button className="icon-btn" onClick={(e) => { e.stopPropagation(); onToggleSave() }} aria-label={saved ? 'Quitar de guardados' : 'Guardar'}>
+          <Icon name="star" size={20} color={saved ? 'var(--brand)' : 'var(--text-3)'} fill={saved} />
+        </button>
+      )}
       <button
         className="icon-btn"
         style={{ background: 'color-mix(in srgb, var(--brand) 16%, transparent)', color: 'var(--brand)' }}

@@ -37,6 +37,17 @@ export function defaultServing(food: Food): ServingOption {
   return food.servings.find((s) => s.isDefault) ?? food.servings[0]
 }
 
+/** Guarda/quita un alimento de "Guardados" (lo persiste si venía de OpenFoodFacts). */
+export async function setFavorite(food: Food, favorite: boolean): Promise<void> {
+  await upsertFood({ ...food, favorite })
+}
+
+/** Borra un alimento de la base local (no afecta a los registros ya guardados en el diario). */
+export async function deleteFood(id: string): Promise<void> {
+  await db.foods.delete(id)
+  await db.recentFoods.where('foodId').equals(id).delete()
+}
+
 /** Nutrición de una ración concreta * cantidad. */
 export function nutrientsForServing(food: Food, serving: ServingOption, quantity: number): Nutrients {
   return scaleNutrients(food.per100, serving.grams * quantity)

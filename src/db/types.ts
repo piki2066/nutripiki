@@ -68,6 +68,7 @@ export interface Food {
   barcode?: string
   source: FoodSource
   verified?: boolean
+  favorite?: boolean // guardado por el usuario (aparece en "Guardados")
   nutriScore?: string // calidad nutricional OpenFoodFacts: 'a'..'e'
   nova?: number // grado de procesamiento NOVA: 1..4 (4 = ultraprocesado)
   // Nutrición por 100 g/ml

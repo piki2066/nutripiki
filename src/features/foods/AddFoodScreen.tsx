@@ -10,18 +10,19 @@ import { BarcodeScanner } from './BarcodeScanner'
 import { db } from '@/db/db'
 import type { Food, MealName } from '@/db/types'
 import { MEAL_LABELS } from '@/db/types'
-import { logFood, defaultServing, getRecentFoods, getFrequentFoods, recipeToFood } from '@/db/repo'
+import { logFood, defaultServing, getRecentFoods, getFrequentFoods, recipeToFood, setFavorite, deleteFood } from '@/db/repo'
 import { searchOff, lookupBarcode, isStoreInternalBarcode } from '@/lib/off'
 import { normalize, scoreMatch } from '@/lib/search'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useRecipes, useSavedMeals, useCustomFoods } from '@/hooks/useData'
+import { useRecipes, useSavedMeals, useCustomFoods, useFavoriteFoods } from '@/hooks/useData'
 import { logSavedMeal } from '@/db/repo'
 import { useUI } from '@/lib/store'
 import { todayKey } from '@/lib/date'
 
-type Tab = 'all' | 'recent' | 'frequent' | 'mine' | 'meals' | 'recipes'
+type Tab = 'all' | 'recent' | 'frequent' | 'saved' | 'mine' | 'meals' | 'recipes'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'all', label: 'Todos' },
+  { id: 'saved', label: 'Guardados' },
   { id: 'recent', label: 'Recientes' },
   { id: 'frequent', label: 'Frecuentes' },
   { id: 'mine', label: 'Mis alimentos' },
@@ -52,6 +53,25 @@ export default function AddFoodScreen() {
   const recipes = useRecipes()
   const savedMeals = useSavedMeals()
   const customFoods = useCustomFoods()
+  const favoriteFoods = useFavoriteFoods()
+  const favIds = useMemo(() => new Set(favoriteFoods.map((f) => f.id)), [favoriteFoods])
+
+  /** Fila con guardar (estrella) y, para alimentos propios, borrar (papelera). */
+  const renderRow = (f: Food) => {
+    const saved = favIds.has(f.id) || f.favorite === true
+    return (
+      <FoodRow key={f.id} food={f} onOpen={() => setSelected(f)} onQuickAdd={() => quickLog(f)}
+        saved={saved}
+        onToggleSave={async () => {
+          await setFavorite(f, !saved)
+          toast(saved ? 'Quitado de guardados' : 'Guardado', { icon: saved ? 'info' : 'check' })
+        }}
+        onDelete={f.source === 'custom'
+          ? async () => { await deleteFood(f.id); toast('Alimento borrado', { icon: 'info' }) }
+          : undefined}
+      />
+    )
+  }
 
   useEffect(() => { getRecentFoods().then(setRecent); getFrequentFoods().then(setFrequent) }, [])
 
@@ -114,11 +134,12 @@ export default function AddFoodScreen() {
     switch (tab) {
       case 'recent': return query ? recent.filter((f) => scoreMatch(f.name, f.brand, query) > 0) : recent
       case 'frequent': return frequent
+      case 'saved': return query ? favoriteFoods.filter((f) => scoreMatch(f.name, f.brand, query) > 0) : favoriteFoods
       case 'mine': return customFoods
       case 'recipes': return recipes.map(recipeToFood)
       default: return []
     }
-  }, [tab, recent, frequent, customFoods, recipes, query])
+  }, [tab, recent, frequent, favoriteFoods, customFoods, recipes, query])
 
   return (
     <div className="screen screen--flush">
@@ -185,7 +206,7 @@ export default function AddFoodScreen() {
               <>
                 <div className="section-title" style={{ marginTop: 4 }}>Base de datos local</div>
                 <div className="list">
-                  {localResults.map((f) => <FoodRow key={f.id} food={f} onOpen={() => setSelected(f)} onQuickAdd={() => quickLog(f)} />)}
+                  {localResults.map(renderRow)}
                 </div>
               </>
             )}
@@ -196,20 +217,20 @@ export default function AddFoodScreen() {
                   <div className="col gap-2">{[1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 64 }} />)}</div>
                 )}
                 <div className="list">
-                  {offResults.map((f) => <FoodRow key={f.id} food={f} onOpen={() => setSelected(f)} onQuickAdd={() => quickLog(f)} />)}
+                  {offResults.map(renderRow)}
                 </div>
               </>
             )}
             {tab !== 'all' && tab !== 'recipes' && (
               list.length ? (
                 <div className="list">
-                  {list.map((f) => <FoodRow key={f.id} food={f} onOpen={() => setSelected(f)} onQuickAdd={() => quickLog(f)} />)}
+                  {list.map(renderRow)}
                 </div>
-              ) : <EmptyState icon="food" title="Nada por aquí todavía" sub={tab === 'mine' ? 'Crea tus propios alimentos.' : 'Registra alimentos y aparecerán aquí.'} />
+              ) : <EmptyState icon={tab === 'saved' ? 'star' : 'food'} title="Nada por aquí todavía" sub={tab === 'mine' ? 'Crea tus propios alimentos.' : tab === 'saved' ? 'Guarda alimentos con la estrella ⭐ para tenerlos aquí.' : 'Registra alimentos y aparecerán aquí.'} />
             )}
             {tab === 'recipes' && list.length > 0 && (
               <div className="list">
-                {list.map((f) => <FoodRow key={f.id} food={f} onOpen={() => setSelected(f)} onQuickAdd={() => quickLog(f)} />)}
+                {list.map(renderRow)}
               </div>
             )}
             {tab === 'all' && !query && (

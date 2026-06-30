@@ -56,6 +56,10 @@ export function useCustomFoods() {
   return useLiveQuery(() => db.foods.where('source').equals('custom').reverse().toArray(), [], [])
 }
 
+export function useFavoriteFoods() {
+  return useLiveQuery(() => db.foods.filter((f) => f.favorite === true).toArray(), [], [])
+}
+
 export function useExerciseDefs() {
   return useLiveQuery(() => db.exerciseDefs.orderBy('name').toArray(), [], [])
 }
