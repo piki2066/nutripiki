@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Sheet } from '@/components/Sheet'
 import { addWeight, patchProfile, getProfile } from '@/db/repo'
 import { recomputeGoals } from '@/lib/profile'
@@ -11,6 +11,9 @@ export function WeightSheet({ open, onClose, date }: { open: boolean; onClose: (
   const toast = useUI((s) => s.toast)
   const units = profile?.units ?? 'metric'
   const [val, setVal] = useState('')
+
+  // Empieza vacío cada vez que se abre, para escribir directamente.
+  useEffect(() => { if (open) setVal('') }, [open])
 
   async function save() {
     const display = parseFloat(val)
@@ -38,7 +41,8 @@ export function WeightSheet({ open, onClose, date }: { open: boolean; onClose: (
           <span className="label">Peso de hoy</span>
           <div className="input-suffix">
             <input className="input" type="number" inputMode="decimal" autoFocus placeholder="0.0"
-              value={val} onChange={(e) => setVal(e.target.value)} style={{ fontSize: 24, fontWeight: 700 }} />
+              value={val} onChange={(e) => setVal(e.target.value)} onFocus={(e) => e.currentTarget.select()}
+              style={{ fontSize: 24, fontWeight: 700 }} />
             <span>{weightUnit(units)}</span>
           </div>
         </div>

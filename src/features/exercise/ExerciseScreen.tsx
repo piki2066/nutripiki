@@ -209,7 +209,7 @@ function StepsSheet({ open, onClose, date, weight, current }: { open: boolean; o
         <div className="field">
           <span className="label">Pasos</span>
           <input className="input" type="number" inputMode="numeric" value={steps} onChange={(e) => setStepsVal(parseInt(e.target.value) || 0)}
-            style={{ fontSize: 24, fontWeight: 700 }} autoFocus />
+            onFocus={(e) => e.currentTarget.select()} style={{ fontSize: 24, fontWeight: 700 }} autoFocus />
         </div>
         <p className="cap dim">≈ {fmtKcal(caloriesFromSteps(steps, weight))} kcal quemadas</p>
         <button className="btn btn--grad btn--full" onClick={save}>Guardar</button>

@@ -144,7 +144,7 @@ function RegisterSheet({
           <div className="input-suffix">
             <input
               className="input" type="number" inputMode="decimal" autoFocus placeholder="0"
-              value={val} onChange={(e) => setVal(e.target.value)}
+              value={val} onChange={(e) => setVal(e.target.value)} onFocus={(e) => e.currentTarget.select()}
               style={{ fontSize: 22, fontWeight: 700 }}
             />
             <span>{unit}</span>

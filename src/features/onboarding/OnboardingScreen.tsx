@@ -264,7 +264,7 @@ function NumberField({ label, value, unit, onChange, min, max, step = 1 }: {
       <span className="label">{label}</span>
       <div className="input-suffix">
         <input className="input" type="number" inputMode="decimal" value={value}
-          min={min} max={max} step={step}
+          min={min} max={max} step={step} onFocus={(e) => e.currentTarget.select()}
           onChange={(e) => onChange(parseFloat(e.target.value) || 0)} />
         <span>{unit}</span>
       </div>

@@ -91,7 +91,8 @@ export default function ProfileScreen() {
             <span className="label">Altura</span>
             <div className="input-suffix">
               <input className="input" type="number" inputMode="decimal" value={fmtNum(cmToDisplay(height, units))}
-                onChange={(e) => { setHeight(displayToCm(parseFloat(e.target.value) || 0, units)); touch() }} style={{ width: 110 }} />
+                onChange={(e) => { setHeight(displayToCm(parseFloat(e.target.value) || 0, units)); touch() }}
+                onFocus={(e) => e.currentTarget.select()} style={{ width: 110 }} />
               <span>{lengthUnit(units)}</span>
             </div>
           </div>
@@ -125,7 +126,8 @@ export default function ProfileScreen() {
               <span className="label">Peso objetivo</span>
               <div className="input-suffix">
                 <input className="input" type="number" inputMode="decimal" value={fmtNum(kgToDisplay(goalWeight, units))}
-                  onChange={(e) => { setGoalWeight(displayToKg(parseFloat(e.target.value) || 0, units)); touch() }} />
+                  onChange={(e) => { setGoalWeight(displayToKg(parseFloat(e.target.value) || 0, units)); touch() }}
+                  onFocus={(e) => e.currentTarget.select()} />
                 <span>{weightUnit(units)}</span>
               </div>
             </div>
