@@ -54,6 +54,27 @@ export async function logFood(args: {
   const { date, meal, food, servingId, quantity, planned } = args
   await upsertFood(food)
   const serving = food.servings.find((s) => s.id === servingId) ?? defaultServing(food)
+
+  // Si ya existe el mismo alimento con la misma ración en esta comida y día,
+  // se fusiona sumando la cantidad (p. ej. "Huevo ×3") en vez de crear otra fila.
+  const sameDayMeal = await db.foodEntries.where({ date, meal }).toArray()
+  const match = sameDayMeal.find((e) =>
+    e.foodId === food.id
+    && !e.isQuickAdd
+    && e.servingLabel === serving.label
+    && e.servingGrams === serving.grams
+    && (e.done === false) === (planned === true),
+  )
+  if (match) {
+    const newQty = match.quantity + quantity
+    await db.foodEntries.update(match.id, {
+      quantity: newQty,
+      nutrients: nutrientsForServing(food, serving, newQty),
+    })
+    await bumpRecent(food.id)
+    return
+  }
+
   const entry: FoodEntry = {
     id: uid('fe'),
     date,

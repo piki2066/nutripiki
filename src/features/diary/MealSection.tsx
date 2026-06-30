@@ -73,6 +73,7 @@ export function MealSection({ meal, date, entries, onEntry, showMacros }: Props)
                 <span className="list-item__title ellipsis" style={{ fontSize: 14 }}>
                   {e.isQuickAdd && <Icon name="bolt" size={12} color="var(--carbs)" style={{ marginRight: 4, display: 'inline' }} />}
                   {e.name}
+                  {e.quantity !== 1 && <span style={{ color: 'var(--text-2)', fontWeight: 700 }}> ×{fmtNum(e.quantity)}</span>}
                 </span>
                 <span className="list-item__sub ellipsis">
                   {e.quantity !== 1 ? `${fmtNum(e.quantity)} × ` : ''}{e.servingLabel}
