@@ -28,7 +28,15 @@ export async function saveSettings(patch: Partial<AppSettings>): Promise<void> {
 
 // ---------- Alimentos ----------
 export async function upsertFood(food: Food): Promise<string> {
-  const withTokens = { ...food, tokens: tokenize(`${food.name} ${food.brand ?? ''}`) }
+  // Fusiona con la ficha existente para NO perder marcas del usuario (p. ej.
+  // "favorite") al re-guardar el alimento cuando se registra/edita.
+  const existing = await db.foods.get(food.id)
+  const merged: Food = {
+    ...existing,
+    ...food,
+    favorite: food.favorite ?? existing?.favorite,
+  }
+  const withTokens = { ...merged, tokens: tokenize(`${merged.name} ${merged.brand ?? ''}`) }
   await db.foods.put(withTokens as unknown as Food)
   return food.id
 }
