@@ -42,9 +42,12 @@ export default defineConfig({
         id: BASE,
         lang: 'es',
         icons: [
-          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          // A sangre completa (iOS, splash, launchers no adaptativos)
+          { src: 'pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          // Con zona segura (iconos adaptativos de Android: círculo/squircle/gota)
+          { src: 'maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
+          { src: 'maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       devOptions: { enabled: false },
