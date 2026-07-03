@@ -1,6 +1,41 @@
-import type { ReactNode } from 'react'
+import { useState, type InputHTMLAttributes, type ReactNode } from 'react'
 import { Icon, type IconName } from './Icon'
 import { clamp } from '@/lib/format'
+
+/**
+ * Input numérico controlado que puede quedar VACÍO mientras se edita.
+ * Mantiene un borrador de texto: al borrar todo, el campo se ve vacío (no "0");
+ * solo se confirman números válidos (acotados a min/max) y, al perder el foco,
+ * vuelve a mostrar el último valor confirmado.
+ */
+export function NumInput({
+  value, onChange, min = 0, max = 999999, decimals = 1, ...rest
+}: {
+  value: number
+  onChange: (v: number) => void
+  min?: number
+  max?: number
+  decimals?: number
+} & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange' | 'min' | 'max'>) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const fix = (n: number) => Number(clamp(n, min, max).toFixed(decimals))
+  return (
+    <input
+      type="number"
+      inputMode="decimal"
+      {...rest}
+      value={draft ?? String(fix(value))}
+      onChange={(e) => {
+        const t = e.target.value
+        setDraft(t)
+        const n = parseFloat(t)
+        if (Number.isFinite(n)) onChange(fix(n))
+      }}
+      onFocus={(e) => e.currentTarget.select()}
+      onBlur={() => setDraft(null)}
+    />
+  )
+}
 
 export function Segmented<T extends string>({
   options, value, onChange,
@@ -36,12 +71,7 @@ export function Stepper({
       <button onClick={() => onChange(fix(value - step))} aria-label="Menos">
         <Icon name="minus" size={18} />
       </button>
-      <input
-        type="number"
-        inputMode="decimal"
-        value={value}
-        onChange={(e) => onChange(fix(parseFloat(e.target.value) || 0))}
-      />
+      <NumInput value={value} onChange={onChange} min={min} max={max} decimals={decimals} />
       <button onClick={() => onChange(fix(value + step))} aria-label="Más">
         <Icon name="plus" size={18} />
       </button>

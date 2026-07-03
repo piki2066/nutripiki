@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AppHeader } from '@/components/AppHeader'
 import { Icon } from '@/components/Icon'
-import { Segmented } from '@/components/ui'
+import { NumInput, Segmented } from '@/components/ui'
 import { useProfile } from '@/hooks/useData'
 import { saveProfile } from '@/db/repo'
 import { buildProfile } from '@/lib/profile'
@@ -90,9 +90,11 @@ export default function ProfileScreen() {
           <div className="field">
             <span className="label">Altura</span>
             <div className="input-suffix">
-              <input className="input" type="number" inputMode="decimal" value={fmtNum(cmToDisplay(height, units))}
-                onChange={(e) => { setHeight(displayToCm(parseFloat(e.target.value) || 0, units)); touch() }}
-                onFocus={(e) => e.currentTarget.select()} style={{ width: 110 }} />
+              <NumInput className="input" value={cmToDisplay(height, units)}
+                min={units === 'metric' ? 80 : 30} max={units === 'metric' ? 250 : 98}
+                decimals={units === 'metric' ? 0 : 1}
+                onChange={(v) => { setHeight(displayToCm(v, units)); touch() }}
+                style={{ width: 110 }} />
               <span>{lengthUnit(units)}</span>
             </div>
           </div>
@@ -125,9 +127,9 @@ export default function ProfileScreen() {
             <div className="field">
               <span className="label">Peso objetivo</span>
               <div className="input-suffix">
-                <input className="input" type="number" inputMode="decimal" value={fmtNum(kgToDisplay(goalWeight, units))}
-                  onChange={(e) => { setGoalWeight(displayToKg(parseFloat(e.target.value) || 0, units)); touch() }}
-                  onFocus={(e) => e.currentTarget.select()} />
+                <NumInput className="input" value={kgToDisplay(goalWeight, units)}
+                  min={units === 'metric' ? 30 : 66} max={units === 'metric' ? 300 : 660} decimals={1}
+                  onChange={(v) => { setGoalWeight(displayToKg(v, units)); touch() }} />
                 <span>{weightUnit(units)}</span>
               </div>
             </div>

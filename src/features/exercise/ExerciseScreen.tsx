@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { AppHeader } from '@/components/AppHeader'
 import { Icon } from '@/components/Icon'
 import { Sheet } from '@/components/Sheet'
-import { Segmented, Stepper, EmptyState } from '@/components/ui'
+import { NumInput, Segmented, Stepper, EmptyState } from '@/components/ui'
 import {
   useProfile, useWeights, useDayExercise, useDaySteps, useExerciseDefs,
 } from '@/hooks/useData'
@@ -208,8 +208,8 @@ function StepsSheet({ open, onClose, date, weight, current }: { open: boolean; o
       <div className="col gap-3" style={{ paddingBottom: 10 }}>
         <div className="field">
           <span className="label">Pasos</span>
-          <input className="input" type="number" inputMode="numeric" value={steps} onChange={(e) => setStepsVal(parseInt(e.target.value) || 0)}
-            onFocus={(e) => e.currentTarget.select()} style={{ fontSize: 24, fontWeight: 700 }} autoFocus />
+          <NumInput className="input" inputMode="numeric" value={steps} onChange={setStepsVal}
+            min={0} max={200000} decimals={0} style={{ fontSize: 24, fontWeight: 700 }} autoFocus />
         </div>
         <p className="cap dim">≈ {fmtKcal(caloriesFromSteps(steps, weight))} kcal quemadas</p>
         <button className="btn btn--grad btn--full" onClick={save}>Guardar</button>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '@/components/Icon'
 import { Wordmark, BrandEmblem } from '@/components/Wordmark'
-import { Segmented } from '@/components/ui'
+import { NumInput, Segmented } from '@/components/ui'
 import { buildProfile, type ProfileInput } from '@/lib/profile'
 import { saveProfile, addWeight } from '@/db/repo'
 import {
@@ -263,9 +263,8 @@ function NumberField({ label, value, unit, onChange, min, max, step = 1 }: {
     <div className="field">
       <span className="label">{label}</span>
       <div className="input-suffix">
-        <input className="input" type="number" inputMode="decimal" value={value}
-          min={min} max={max} step={step} onFocus={(e) => e.currentTarget.select()}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)} />
+        <NumInput className="input" value={value} onChange={onChange}
+          min={min} max={max} step={step} decimals={step < 1 ? 1 : 0} />
         <span>{unit}</span>
       </div>
     </div>

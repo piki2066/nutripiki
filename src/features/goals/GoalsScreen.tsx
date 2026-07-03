@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AppHeader } from '@/components/AppHeader'
 import { Icon } from '@/components/Icon'
-import { Segmented, Stepper, Toggle } from '@/components/ui'
+import { NumInput, Segmented, Stepper, Toggle } from '@/components/ui'
 import { Sheet } from '@/components/Sheet'
 import { useProfile } from '@/hooks/useData'
 import { patchProfile } from '@/db/repo'
@@ -137,7 +137,8 @@ function CaloriesSheet({ open, onClose, profile, onSaved }: { open: boolean; onC
           <div className="field">
             <span className="label">Calorías objetivo</span>
             <div className="input-suffix">
-              <input className="input" type="number" inputMode="numeric" value={val} onChange={(e) => setVal(parseInt(e.target.value) || 0)} style={{ fontSize: 22, fontWeight: 700 }} />
+              <NumInput className="input" inputMode="numeric" value={val} onChange={setVal}
+                min={1} max={99999} decimals={0} style={{ fontSize: 22, fontWeight: 700 }} />
               <span>kcal</span>
             </div>
           </div>
@@ -271,7 +272,9 @@ function MicrosSheet({ open, onClose, micros, onSaved }: { open: boolean; onClos
           <div key={f.key} className="row between">
             <span className="list-item__title grow">{f.label}</span>
             <div className="input-suffix" style={{ width: 130 }}>
-              <input className="input" inputMode="numeric" value={m[f.key]} onChange={(e) => setM((p) => ({ ...p, [f.key]: parseFloat(e.target.value) || 0 }))}
+              <NumInput className="input" inputMode="numeric" value={m[f.key]}
+                onChange={(v) => setM((p) => ({ ...p, [f.key]: v }))}
+                min={0} max={99999} decimals={1}
                 style={{ height: 42, textAlign: 'right', paddingRight: 40 }} />
               <span style={{ top: '50%' }}>{f.unit}</span>
             </div>
