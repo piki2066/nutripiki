@@ -5,6 +5,10 @@
 --  Qué se sube a la nube: SOLO el resumen de cada día (calorías comidas,
 --  objetivo, ejercicio, pasos, peso y si registraste ese día).
 --  Los alimentos concretos, recetas, fotos y medidas NUNCA salen del móvil.
+--
+--  Además de este SQL, en Authentication → Sign In / Providers hay que:
+--    · activar "Allow anonymous sign-ins"  (para entrar sin formularios)
+--    · desactivar "Confirm email"          (para el correo opcional)
 -- ============================================================================
 
 create extension if not exists pgcrypto;
@@ -131,9 +135,11 @@ create policy "escribir solo mis stats" on public.daily_stats
 
 -- ------------------------------------------------------------------ RPCs ---
 
--- Enviar solicitud por código. Si el otro ya te la había mandado, se aceptan.
-create or replace function public.send_friend_request(code text)
-returns table (friend_id uuid, display_name text, status text)
+-- Añadir amigo con su código (o con el enlace de invitación): queda aceptado
+-- en el momento. El código ES la llave que tú compartes; si se te va de las
+-- manos, regenéralo y los enlaces antiguos dejan de valer.
+create or replace function public.add_friend(code text)
+returns table (friend_id uuid, display_name text)
 language plpgsql security definer set search_path = public as $$
 declare target public.profiles;
 begin
@@ -141,41 +147,27 @@ begin
   if not found then raise exception 'CODIGO_NO_EXISTE'; end if;
   if target.id = auth.uid() then raise exception 'ES_TU_CODIGO'; end if;
 
-  update public.friendships f set status = 'accepted'
-   where f.requester = target.id and f.addressee = auth.uid() and f.status = 'pending';
-  if found then
-    return query select target.id, target.display_name, 'accepted'::text;
-    return;
-  end if;
-
   insert into public.friendships (requester, addressee, status)
-  values (auth.uid(), target.id, 'pending')
-  on conflict (requester, addressee) do nothing;
+  values (auth.uid(), target.id, 'accepted')
+  on conflict (requester, addressee) do update set status = 'accepted';
 
-  return query select target.id, target.display_name, 'pending'::text;
+  -- si el otro ya te había añadido, esa fila también queda aceptada
+  update public.friendships f set status = 'accepted'
+   where f.requester = target.id and f.addressee = auth.uid();
+
+  return query select target.id, target.display_name;
 end;
 $$;
 
--- Solicitudes que me han llegado (aún no somos amigos: hace falta definer).
-create or replace function public.pending_requests()
-returns table (id uuid, requester uuid, display_name text, emoji text, created_at timestamptz)
-language sql stable security definer set search_path = public as $$
-  select f.id, f.requester, p.display_name, p.emoji, f.created_at
-  from public.friendships f
-  join public.profiles p on p.id = f.requester
-  where f.addressee = auth.uid() and f.status = 'pending'
-  order by f.created_at desc;
-$$;
-
--- Solicitudes que yo he enviado y siguen pendientes.
-create or replace function public.sent_requests()
-returns table (id uuid, addressee uuid, display_name text, emoji text, created_at timestamptz)
-language sql stable security definer set search_path = public as $$
-  select f.id, f.addressee, p.display_name, p.emoji, f.created_at
-  from public.friendships f
-  join public.profiles p on p.id = f.addressee
-  where f.requester = auth.uid() and f.status = 'pending'
-  order by f.created_at desc;
+-- Cambiar mi código (invalida los enlaces de invitación que hubiera repartido).
+create or replace function public.regenerate_friend_code() returns text
+language plpgsql security definer set search_path = public as $$
+declare c text;
+begin
+  c := public.gen_friend_code();
+  update public.profiles set friend_code = c, updated_at = now() where id = auth.uid();
+  return c;
+end;
 $$;
 
 -- Mis amigos aceptados.
@@ -209,8 +201,7 @@ revoke all on public.profiles from authenticated;
 grant select on public.profiles to authenticated;
 grant update (display_name, emoji, last_seen, updated_at) on public.profiles to authenticated;
 
-grant execute on function public.send_friend_request(text) to authenticated;
-grant execute on function public.pending_requests()      to authenticated;
-grant execute on function public.sent_requests()         to authenticated;
-grant execute on function public.friends_overview()      to authenticated;
-grant execute on function public.wipe_my_stats()         to authenticated;
+grant execute on function public.add_friend(text)             to authenticated;
+grant execute on function public.regenerate_friend_code()     to authenticated;
+grant execute on function public.friends_overview()           to authenticated;
+grant execute on function public.wipe_my_stats()              to authenticated;

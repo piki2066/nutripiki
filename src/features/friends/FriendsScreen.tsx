@@ -12,9 +12,10 @@ import { fmtKcal, fmtNum, fmtSigned } from '@/lib/format'
 import { kgToDisplay, weightUnit } from '@/lib/units'
 import { lastNDays, parseKey, todayKey, format } from '@/lib/date'
 import {
-  useCloud, myProfile, fetchFriends, fetchPending, fetchSent, fetchFriendStats,
-  sendFriendRequest, acceptRequest, rejectRequest, removeFriend, pushStats, collectStats, signOut,
-  type CloudProfile, type DailyStat, type FriendRow, type RequestRow,
+  useCloud, myProfile, fetchFriends, fetchFriendStats, addFriend, regenerateCode,
+  removeFriend, pushStats, collectStats, signOut, linkAccount,
+  inviteUrl, peekInvite, clearInvite,
+  type CloudProfile, type CloudUser, type DailyStat, type FriendRow,
 } from '@/lib/cloud'
 import { CloudSetup } from './CloudSetup'
 import { AuthPanel } from './AuthPanel'
@@ -31,36 +32,43 @@ export default function FriendsScreen() {
       {!configured ? <CloudSetup />
         : status === 'loading' ? <div className="center-all" style={{ padding: 40 }}><div className="skeleton" style={{ width: 64, height: 64, borderRadius: 18 }} /></div>
           : !user ? <AuthPanel defaultName={profile?.name} />
-            : <FriendsHome units={profile?.units ?? 'metric'} startsMonday={profile?.weeklyStartsMonday ?? true} />}
+            : <FriendsHome user={user} units={profile?.units ?? 'metric'} startsMonday={profile?.weeklyStartsMonday ?? true} />}
     </div>
   )
 }
 
-function FriendsHome({ units, startsMonday }: { units: Units; startsMonday: boolean }) {
+function FriendsHome({ user, units, startsMonday }: { user: CloudUser; units: Units; startsMonday: boolean }) {
   const toast = useUI((s) => s.toast)
   const today = todayKey()
 
   const [me, setMe] = useState<CloudProfile | null>(null)
   const [members, setMembers] = useState<Member[]>([])
-  const [pending, setPending] = useState<RequestRow[]>([])
-  const [sent, setSent] = useState<RequestRow[]>([])
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(true)
   const [err, setErr] = useState<string | null>(null)
   const [open, setOpen] = useState<Member | null>(null)
+  const [showCode, setShowCode] = useState(false)
 
   const load = useCallback(async (push: boolean) => {
     setBusy(true); setErr(null)
     try {
+      // Si se ha abierto la app desde un enlace de invitación, se aplica ya.
+      const invite = peekInvite()
+      if (invite) {
+        clearInvite()
+        try {
+          const r = await addFriend(invite)
+          toast(`¡Ya sois amigos, ${r.display_name}!`, { icon: 'check' })
+        } catch (e) {
+          toast((e as Error).message, { icon: 'info' })
+        }
+      }
       if (push) await pushStats(30)
-      const [prof, friends, pend, sentReq] = await Promise.all([
-        myProfile(), fetchFriends(), fetchPending(), fetchSent(),
-      ])
-      setMe(prof); setPending(pend); setSent(sentReq)
+      const [prof, friends] = await Promise.all([myProfile(), fetchFriends()])
+      setMe(prof)
 
       const ids = friends.map((f: FriendRow) => f.friend_id)
-      const from = lastNDays(30)[0]
-      const stats: DailyStat[] = ids.length ? await fetchFriendStats(ids, from) : []
+      const stats: DailyStat[] = ids.length ? await fetchFriendStats(ids, lastNDays(30)[0]) : []
       const mine = await collectStats(lastNDays(30))
       const mineMember = buildMember(
         { id: 'me', name: prof?.display_name ?? 'Tú', emoji: prof?.emoji ?? '🥑', isMe: true },
@@ -72,59 +80,71 @@ function FriendsHome({ units, startsMonday }: { units: Units; startsMonday: bool
     } finally {
       setBusy(false)
     }
-  }, [today, startsMonday])
+  }, [today, startsMonday, toast])
 
   useEffect(() => { load(true) }, [load])
+
+  async function invite() {
+    if (!me) return
+    const url = inviteUrl(me.friend_code)
+    const text = `Llevo mis comidas con NutriPiki. Ábrelo y nos vemos la racha:\n${url}`
+    try {
+      if (navigator.share) await navigator.share({ title: 'NutriPiki', text })
+      else { await navigator.clipboard.writeText(text); toast('Enlace copiado, pégalo donde quieras', { icon: 'check' }) }
+    } catch { /* cancelado */ }
+  }
 
   async function add() {
     const c = code.trim().toUpperCase()
     if (c.length < 4) return toast('Escribe el código de tu amigo', { icon: 'info' })
     try {
-      const r = await sendFriendRequest(c)
+      const r = await addFriend(c)
       setCode('')
-      toast(r.status === 'accepted' ? `¡Ya sois amigos, ${r.display_name}!` : `Solicitud enviada a ${r.display_name}`, { icon: 'check' })
+      toast(`¡Ya sois amigos, ${r.display_name}!`, { icon: 'check' })
       load(false)
     } catch (e) {
       toast((e as Error).message, { icon: 'info' })
     }
   }
 
-  async function shareCode() {
-    if (!me) return
-    const text = `Añádeme en NutriPiki con mi código ${me.friend_code} · https://piki2066.github.io/nutripiki/`
-    try {
-      if (navigator.share) await navigator.share({ title: 'Mi código de NutriPiki', text })
-      else { await navigator.clipboard.writeText(me.friend_code); toast('Código copiado', { icon: 'check' }) }
-    } catch { /* cancelado */ }
-  }
-
   return (
     <>
-      {/* Mi tarjeta + código */}
+      {/* Invitar */}
       <div className="card card--glow col gap-3" style={{ marginBottom: 14 }}>
         <div className="row between" style={{ alignItems: 'center' }}>
           <div className="col" style={{ gap: 2, alignItems: 'flex-start' }}>
-            <span className="label" style={{ margin: 0 }}>Tu código de amigo</span>
-            <span className="big-num" style={{ fontSize: 30, letterSpacing: '0.14em' }}>{me?.friend_code ?? '······'}</span>
+            <span className="h3">Invita a quien quieras</span>
+            <span className="cap dim">Le mandas un enlace y, al abrirlo, ya estáis conectados.</span>
           </div>
           <button className="icon-btn" onClick={() => load(true)} aria-label="Actualizar" disabled={busy}>
             <Icon name="refresh" size={20} color={busy ? 'var(--text-3)' : 'var(--brand)'} />
           </button>
         </div>
-        <div className="row gap-2">
-          <button className="btn btn--soft btn--sm grow" onClick={shareCode}><Icon name="share" size={16} /> Compartir</button>
-          <button className="btn btn--soft btn--sm grow" onClick={async () => {
-            if (!me) return
-            try { await navigator.clipboard.writeText(me.friend_code); toast('Código copiado', { icon: 'check' }) }
-            catch { toast('No se pudo copiar', { icon: 'info' }) }
-          }}><Icon name="copy" size={16} /> Copiar</button>
-        </div>
-        <div className="row gap-2" style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
-          <input className="input" placeholder="Código de tu amigo" value={code} autoCapitalize="characters"
-            autoCorrect="off" spellCheck={false} style={{ flex: 1 }}
-            onChange={(e) => setCode(e.target.value.toUpperCase())} />
-          <button className="btn btn--primary" onClick={add}><Icon name="plus" size={18} /> Añadir</button>
-        </div>
+        <button className="btn btn--grad btn--full" onClick={invite} disabled={!me}>
+          <Icon name="share" size={19} /> Invitar a un amigo
+        </button>
+
+        {!showCode ? (
+          <button className="cap dim" style={{ background: 'none', textAlign: 'center' }} onClick={() => setShowCode(true)}>
+            ¿Te han dado un código? Tócame
+          </button>
+        ) : (
+          <div className="col gap-2" style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
+            <div className="row gap-2">
+              <input className="input" placeholder="Código del amigo" value={code} autoCapitalize="characters"
+                autoCorrect="off" spellCheck={false} style={{ flex: 1 }}
+                onChange={(e) => setCode(e.target.value.toUpperCase())} />
+              <button className="btn btn--primary" onClick={add}><Icon name="plus" size={18} /> Añadir</button>
+            </div>
+            <div className="row between" style={{ alignItems: 'center' }}>
+              <span className="cap dim">El tuyo es <b className="tabnum" style={{ letterSpacing: '0.1em' }}>{me?.friend_code ?? '······'}</b></span>
+              <button className="cap t-cal" style={{ fontWeight: 700, background: 'none' }} onClick={async () => {
+                try { await regenerateCode(); await load(false); toast('Código nuevo: los enlaces viejos ya no valen', { icon: 'check' }) }
+                catch (e) { toast((e as Error).message, { icon: 'info' }) }
+              }}>Cambiar código</button>
+            </div>
+          </div>
+        )}
       </div>
 
       {err && (
@@ -132,34 +152,6 @@ function FriendsHome({ units, startsMonday }: { units: Units; startsMonday: bool
           <Icon name="info" size={17} color="var(--bad)" style={{ flexShrink: 0, marginTop: 1 }} />
           <span className="cap" style={{ color: 'var(--bad)' }}>{err}</span>
         </div>
-      )}
-
-      {/* Solicitudes recibidas */}
-      {pending.length > 0 && (
-        <>
-          <div className="section-title">Solicitudes</div>
-          <div className="col gap-2" style={{ marginBottom: 14 }}>
-            {pending.map((r) => (
-              <div key={r.id} className="card row between" style={{ padding: 12, alignItems: 'center' }}>
-                <div className="row gap-3" style={{ alignItems: 'center', minWidth: 0 }}>
-                  <span style={{ fontSize: 26 }}>{r.emoji}</span>
-                  <div className="col" style={{ alignItems: 'flex-start', gap: 1, minWidth: 0 }}>
-                    <span className="list-item__title ellipsis">{r.display_name}</span>
-                    <span className="cap dim">Quiere ser tu amigo</span>
-                  </div>
-                </div>
-                <div className="row gap-2">
-                  <button className="btn btn--soft btn--sm" onClick={async () => { await rejectRequest(r.id); load(false) }} aria-label="Rechazar">
-                    <Icon name="close" size={16} />
-                  </button>
-                  <button className="btn btn--primary btn--sm" onClick={async () => { await acceptRequest(r.id); toast('¡Amigo añadido!', { icon: 'check' }); load(false) }}>
-                    <Icon name="check" size={16} /> Aceptar
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
       )}
 
       {/* Muro */}
@@ -177,30 +169,12 @@ function FriendsHome({ units, startsMonday }: { units: Units; startsMonday: bool
       {members.length <= 1 && !busy && (
         <div className="card col gap-2" style={{ marginTop: 12, alignItems: 'center', textAlign: 'center' }}>
           <Icon name="users" size={28} color="var(--text-3)" />
-          <span className="h3">Aún no tienes amigos aquí</span>
-          <span className="cap dim">Pásales tu código y que instalen NutriPiki. Verás su racha, sus calorías de la semana, su ejercicio y su peso.</span>
+          <span className="h3">Todavía estás solo aquí</span>
+          <span className="cap dim">Manda el enlace por WhatsApp: quien lo abra entra en la app y aparece en esta lista sin más pasos.</span>
         </div>
       )}
 
-      {sent.length > 0 && (
-        <>
-          <div className="section-title">Enviadas</div>
-          <div className="list">
-            {sent.map((r) => (
-              <div key={r.id} className="list-item">
-                <span style={{ fontSize: 20 }}>{r.emoji}</span>
-                <span className="col" style={{ gap: 1, minWidth: 0, alignItems: 'flex-start' }}>
-                  <span className="list-item__title ellipsis">{r.display_name}</span>
-                  <span className="list-item__sub">Esperando que acepte</span>
-                </span>
-                <button className="icon-btn" onClick={async () => { await rejectRequest(r.id); load(false) }} aria-label="Cancelar">
-                  <Icon name="close" size={16} color="var(--text-3)" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
+      {user.anonymous && <ProtectAccount />}
 
       <button className="btn btn--soft btn--full" style={{ marginTop: 16 }} onClick={async () => { await signOut(); toast('Sesión cerrada', { icon: 'info' }) }}>
         <Icon name="logout" size={18} /> Cerrar sesión
@@ -210,6 +184,53 @@ function FriendsHome({ units, startsMonday }: { units: Units; startsMonday: bool
         await removeFriend(id); setOpen(null); toast('Amigo eliminado', { icon: 'info' }); load(false)
       }} />
     </>
+  )
+}
+
+/** Aviso suave: la identidad anónima vive solo en este móvil. */
+function ProtectAccount() {
+  const toast = useUI((s) => s.toast)
+  const [openForm, setOpenForm] = useState(false)
+  const [email, setEmail] = useState('')
+  const [pass, setPass] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  if (!openForm) {
+    return (
+      <button className="card card--tap row gap-3" style={{ marginTop: 14, width: '100%', textAlign: 'left', alignItems: 'flex-start' }} onClick={() => setOpenForm(true)}>
+        <Icon name="lock" size={18} color="var(--warn)" style={{ flexShrink: 0, marginTop: 1 }} />
+        <span className="cap">
+          <b>Guarda tu cuenta.</b> Ahora vive solo en este móvil: si borras la app, pierdes a tus amigos.
+          Ponle un correo y una contraseña (30 segundos).
+        </span>
+      </button>
+    )
+  }
+
+  return (
+    <div className="card col gap-3" style={{ marginTop: 14 }}>
+      <span className="h3">Guardar mi cuenta</span>
+      <div className="field">
+        <span className="label">Correo</span>
+        <input className="input" type="email" inputMode="email" autoCapitalize="none" autoCorrect="off"
+          value={email} onChange={(e) => setEmail(e.target.value)} />
+      </div>
+      <div className="field">
+        <span className="label">Contraseña</span>
+        <input className="input" type="password" placeholder="Mínimo 6 caracteres" value={pass}
+          onChange={(e) => setPass(e.target.value)} />
+      </div>
+      <div className="row gap-2">
+        <button className="btn btn--soft btn--full" onClick={() => setOpenForm(false)}>Ahora no</button>
+        <button className="btn btn--grad btn--full" disabled={busy || !email.includes('@') || pass.length < 6}
+          onClick={async () => {
+            setBusy(true)
+            try { await linkAccount(email, pass); toast('Cuenta guardada', { icon: 'check' }) }
+            catch (e) { toast((e as Error).message, { icon: 'info' }) }
+            finally { setBusy(false) }
+          }}>Guardar</button>
+      </div>
+    </div>
   )
 }
 

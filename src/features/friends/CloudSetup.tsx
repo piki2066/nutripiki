@@ -6,7 +6,7 @@ import { useUI } from '@/lib/store'
 const STEPS = [
   'Entra en supabase.com y crea un proyecto gratis (Region: Europe).',
   'Abre SQL Editor → New query, pega el archivo docs/supabase/schema.sql y pulsa Run.',
-  'En Authentication → Sign In / Providers → Email, desactiva "Confirm email".',
+  'En Authentication → Sign In / Providers: activa "Allow anonymous sign-ins" y desactiva "Confirm email".',
   'En Project Settings → Data API copia la URL y la clave anon public, y pégalas aquí abajo.',
 ]
 
@@ -74,8 +74,8 @@ export function CloudSetup() {
           <Icon name="cloud" size={18} /> Conectar
         </button>
         <span className="cap dim">
-          La clave <i>anon</i> está pensada para ir en la app: quien la tenga solo puede ver lo que las reglas de seguridad
-          permitan, es decir, lo suyo y lo de sus amigos aceptados.
+          La clave <i>anon</i> está pensada para ir en la app: quien la tenga solo puede ver lo que las reglas de
+          seguridad permitan, es decir, lo suyo y lo de sus amigos.
         </span>
       </div>
     </div>

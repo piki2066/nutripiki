@@ -55,7 +55,7 @@ export function isCloudConfigured(): boolean {
 
 /* --------------------------------- estado -------------------------------- */
 
-export interface CloudUser { id: string; email: string }
+export interface CloudUser { id: string; email: string; anonymous: boolean }
 export type CloudStatus = 'idle' | 'loading' | 'ready' | 'error'
 
 export interface CloudState {
@@ -106,9 +106,9 @@ export function getClient(): Promise<SupabaseClient> {
   return clientPromise
 }
 
-function toUser(session: { user?: { id: string; email?: string } } | null): CloudUser | null {
+function toUser(session: { user?: { id: string; email?: string; is_anonymous?: boolean } } | null): CloudUser | null {
   if (!session?.user) return null
-  return { id: session.user.id, email: session.user.email ?? '' }
+  return { id: session.user.id, email: session.user.email ?? '', anonymous: !!session.user.is_anonymous }
 }
 
 let inited = false
@@ -146,6 +146,27 @@ export async function signUp(email: string, password: string, displayName: strin
   })
   if (error) throw new Error(friendlyAuthError(error.message))
   return { needsConfirmation: !data.session }
+}
+
+/** Entrar sin formularios: crea una identidad anónima en este dispositivo. */
+export async function signInAnonymous(displayName: string) {
+  const c = await getClient()
+  const { error } = await c.auth.signInAnonymously({
+    options: { data: { display_name: displayName.trim() || 'Amigo' } },
+  })
+  if (error) {
+    if (error.message.toLowerCase().includes('anonymous')) {
+      throw new Error('Falta activar "Allow anonymous sign-ins" en Supabase → Authentication.')
+    }
+    throw new Error(friendlyAuthError(error.message))
+  }
+}
+
+/** Convierte la cuenta anónima en permanente (para no perder los amigos). */
+export async function linkAccount(email: string, password: string) {
+  const c = await getClient()
+  const { error } = await c.auth.updateUser({ email: email.trim(), password })
+  if (error) throw new Error(friendlyAuthError(error.message))
 }
 
 export async function signIn(email: string, password: string) {
@@ -258,15 +279,6 @@ export interface FriendRow {
   last_seen: string
 }
 
-export interface RequestRow {
-  id: string
-  requester?: string
-  addressee?: string
-  display_name: string
-  emoji: string
-  created_at: string
-}
-
 export async function fetchFriends(): Promise<FriendRow[]> {
   const c = await getClient()
   const { data, error } = await c.rpc('friends_overview')
@@ -274,42 +286,25 @@ export async function fetchFriends(): Promise<FriendRow[]> {
   return (data ?? []) as FriendRow[]
 }
 
-export async function fetchPending(): Promise<RequestRow[]> {
+/** Añadir amigo con su código (o con su enlace): queda hecho al momento. */
+export async function addFriend(code: string): Promise<{ display_name: string }> {
   const c = await getClient()
-  const { data, error } = await c.rpc('pending_requests')
-  if (error) throw new Error(error.message)
-  return (data ?? []) as RequestRow[]
-}
-
-export async function fetchSent(): Promise<RequestRow[]> {
-  const c = await getClient()
-  const { data, error } = await c.rpc('sent_requests')
-  if (error) throw new Error(error.message)
-  return (data ?? []) as RequestRow[]
-}
-
-export async function sendFriendRequest(code: string): Promise<{ display_name: string; status: string }> {
-  const c = await getClient()
-  const { data, error } = await c.rpc('send_friend_request', { code })
+  const { data, error } = await c.rpc('add_friend', { code })
   if (error) {
-    if (error.message.includes('CODIGO_NO_EXISTE')) throw new Error('Ese código no existe. Revísalo.')
-    if (error.message.includes('ES_TU_CODIGO')) throw new Error('Ese es tu propio código.')
+    if (error.message.includes('CODIGO_NO_EXISTE')) throw new Error('Ese código o enlace ya no vale.')
+    if (error.message.includes('ES_TU_CODIGO')) throw new Error('Ese es tu propio enlace.')
     throw new Error(error.message)
   }
-  const row = (data as { display_name: string; status: string }[])?.[0]
-  return row ?? { display_name: 'Amigo', status: 'pending' }
+  const row = (data as { display_name: string }[])?.[0]
+  return row ?? { display_name: 'Amigo' }
 }
 
-export async function acceptRequest(id: string) {
+/** Cambia mi código: los enlaces que hubiera repartido dejan de funcionar. */
+export async function regenerateCode(): Promise<string> {
   const c = await getClient()
-  const { error } = await c.from('friendships').update({ status: 'accepted' }).eq('id', id)
+  const { data, error } = await c.rpc('regenerate_friend_code')
   if (error) throw new Error(error.message)
-}
-
-export async function rejectRequest(id: string) {
-  const c = await getClient()
-  const { error } = await c.from('friendships').delete().eq('id', id)
-  if (error) throw new Error(error.message)
+  return String(data ?? '')
 }
 
 export async function removeFriend(friendId: string) {
@@ -330,6 +325,34 @@ export async function fetchFriendStats(ids: string[], fromDate: string): Promise
     .select('*').in('user_id', ids).gte('date', fromDate).order('date')
   if (error) throw new Error(error.message)
   return (data ?? []) as DailyStat[]
+}
+
+/* ------------------------------ invitaciones ----------------------------- */
+
+const INVITE_KEY = 'nutripiki.invite'
+
+/** Enlace para invitar: se abre en la app y añade al amigo solo. */
+export function inviteUrl(code: string): string {
+  return `${location.origin}${location.pathname}#/friends?add=${encodeURIComponent(code)}`
+}
+
+/**
+ * Si la app se ha abierto desde un enlace de invitación, guarda el código para
+ * aplicarlo en cuanto haya sesión (aunque antes toque hacer el onboarding).
+ */
+export function stashInviteFromUrl() {
+  try {
+    const m = /[?&]add=([A-Za-z0-9]{4,12})/.exec(location.hash) ?? /[?&]add=([A-Za-z0-9]{4,12})/.exec(location.search)
+    if (m) localStorage.setItem(INVITE_KEY, m[1].toUpperCase())
+  } catch { /* modo privado */ }
+}
+
+export function peekInvite(): string | null {
+  try { return localStorage.getItem(INVITE_KEY) } catch { return null }
+}
+
+export function clearInvite() {
+  try { localStorage.removeItem(INVITE_KEY) } catch { /* nada */ }
 }
 
 /** Sincroniza en segundo plano al abrir la app (silencioso si no procede). */
