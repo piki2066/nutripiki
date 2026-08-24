@@ -201,6 +201,12 @@ revoke all on public.profiles from authenticated;
 grant select on public.profiles to authenticated;
 grant update (display_name, emoji, last_seen, updated_at) on public.profiles to authenticated;
 
+-- Latido para que el proyecto gratuito no se duerma (se pausa a la semana sin
+-- actividad). Lo llama .github/workflows/keep-supabase-alive.yml cada 3 días.
+create or replace function public.ping() returns timestamptz
+language sql stable set search_path = public as $$ select now() $$;
+
+grant execute on function public.ping()                       to anon, authenticated;
 grant execute on function public.add_friend(text)             to authenticated;
 grant execute on function public.regenerate_friend_code()     to authenticated;
 grant execute on function public.friends_overview()           to authenticated;
