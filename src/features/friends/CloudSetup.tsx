@@ -7,7 +7,7 @@ const STEPS = [
   'Entra en supabase.com y crea un proyecto gratis (Region: Europe).',
   'Abre SQL Editor → New query, pega el archivo docs/supabase/schema.sql y pulsa Run.',
   'En Authentication → Sign In / Providers: activa "Allow anonymous sign-ins" y desactiva "Confirm email".',
-  'En Project Settings → Data API copia la URL y la clave anon public, y pégalas aquí abajo.',
+  'En Project Settings → Data API copia la URL, y en API Keys la clave pública (sb_publishable_… o la antigua anon public). Pégalas aquí abajo.',
 ]
 
 /** Pantalla previa: la nube de amigos aún no está conectada. */
@@ -20,7 +20,8 @@ export function CloudSetup() {
     const u = url.trim().replace(/\/+$/, '')
     const k = key.trim()
     if (!/^https:\/\/.+\.supabase\.co$/.test(u)) return toast('La URL debe ser https://xxxx.supabase.co', { icon: 'info' })
-    if (k.length < 30) return toast('La clave anon no parece correcta', { icon: 'info' })
+    if (k.length < 30) return toast('La clave pública no parece correcta', { icon: 'info' })
+    if (k.startsWith('sb_secret_') || k.includes('service_role')) return toast('Esa es la clave SECRETA: usa la pública', { icon: 'info' })
     setCloudConfig({ url: u, anonKey: k })
     toast('Nube conectada', { icon: 'check' })
   }
@@ -66,16 +67,16 @@ export function CloudSetup() {
             autoCorrect="off" spellCheck={false} onChange={(e) => setUrl(e.target.value)} />
         </div>
         <div className="field">
-          <span className="label">Clave anon public</span>
-          <input className="input" placeholder="eyJhbGciOi..." value={key} autoCapitalize="none"
+          <span className="label">Clave pública (publishable / anon)</span>
+          <input className="input" placeholder="sb_publishable_… o eyJhbGciOi…" value={key} autoCapitalize="none"
             autoCorrect="off" spellCheck={false} onChange={(e) => setKey(e.target.value)} />
         </div>
         <button className="btn btn--grad btn--full" onClick={save}>
           <Icon name="cloud" size={18} /> Conectar
         </button>
         <span className="cap dim">
-          La clave <i>anon</i> está pensada para ir en la app: quien la tenga solo puede ver lo que las reglas de
-          seguridad permitan, es decir, lo suyo y lo de sus amigos.
+          La clave <i>pública</i> está pensada para ir dentro de la app: quien la tenga solo puede ver lo que las
+          reglas de seguridad permitan, es decir, lo suyo y lo de sus amigos. La <i>secreta</i> no se usa aquí nunca.
         </span>
       </div>
     </div>
