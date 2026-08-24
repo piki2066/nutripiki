@@ -1,0 +1,19 @@
+# Configuración del proyecto de Supabase de NutriPiki (solo Amigos).
+project_id = "nutripiki"
+
+[auth]
+enabled = true
+site_url = "https://piki2066.github.io/nutripiki/"
+additional_redirect_urls = ["https://piki2066.github.io/nutripiki/"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_rotation_interval = 10
+# Entrar sin formularios: es lo que hace que un amigo se una con un enlace.
+enable_anonymous_sign_ins = true
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+# Sin confirmación por correo: el correo aquí es opcional y solo sirve para
+# recuperar la cuenta en otro móvil.
+enable_confirmations = false
