@@ -1,16 +1,14 @@
 import { useNavigate } from 'react-router-dom'
-import { useLiveQuery } from 'dexie-react-hooks'
 import { AppHeader } from '@/components/AppHeader'
 import { Icon } from '@/components/Icon'
-import { ListRow, Stat } from '@/components/ui'
+import { ListRow } from '@/components/ui'
 import { BarChart, LineChart, type Point } from '@/components/Charts'
-import { db } from '@/db/db'
-import { useProfile, useWeights, useAllLoggedDates } from '@/hooks/useData'
-import { latestWeight, loggingStreak, effectiveCalorieGoal } from '@/lib/selectors'
-import { sumNutrients } from '@/lib/nutrition'
+import { WeekCaloriesCard } from '@/components/WeekCaloriesCard'
+import { useProfile, useWeights, useAllLoggedDates, useWeekDays } from '@/hooks/useData'
+import { latestWeight, loggingStreak, weekCalories } from '@/lib/selectors'
 import { kgToDisplay, weightUnit } from '@/lib/units'
 import { fmtKcal, fmtNum, fmtSigned } from '@/lib/format'
-import { lastNDays, todayKey, parseKey } from '@/lib/date'
+import { todayKey, parseKey, weekRange } from '@/lib/date'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -20,29 +18,23 @@ export default function ProgressScreen() {
   const weights = useWeights() ?? []
   const logged = useAllLoggedDates() ?? new Set<string>()
 
-  const days = lastNDays(7)
-  const weekData = useLiveQuery(async () => {
-    const out: { date: string; calories: number }[] = []
-    for (const d of days) {
-      const entries = await db.foodEntries.where('date').equals(d).toArray()
-      out.push({ date: d, calories: sumNutrients(entries.map((e) => e.nutrients)).calories })
-    }
-    return out
-  }, [days.join(',')], [])
+  const today = todayKey()
+  const week = weekRange(today, profile?.weeklyStartsMonday ?? true)
+  const weekDays = useWeekDays(week) ?? []
 
   if (!profile) return null
   const u = profile.units
   const current = latestWeight(weights, profile.weightStartKg)
   const changed = current - profile.weightStartKg
-  const streak = loggingStreak(logged, todayKey())
+  const streak = loggingStreak(logged, today)
 
-  const loggedDays = (weekData ?? []).filter((d) => d.calories > 0)
-  const avgCal = loggedDays.length ? Math.round(loggedDays.reduce((s, d) => s + d.calories, 0) / loggedDays.length) : 0
-  const goal = effectiveCalorieGoal(profile, todayKey())
+  const wk = weekCalories(profile, weekDays, today)
+  const loggedDays = weekDays.filter((d) => d.eatenKcal > 0).length
+  const dailyGoal = weekDays.length ? Math.round(wk.budget / weekDays.length) : profile.calorieGoal
 
-  const barData: Point[] = (weekData ?? []).map((d) => ({
+  const barData: Point[] = weekDays.map((d) => ({
     label: format(parseKey(d.date), 'EEEEE', { locale: es }),
-    value: Math.round(d.calories),
+    value: d.eatenKcal,
   }))
 
   const weightPoints: Point[] = [...weights]
@@ -72,25 +64,32 @@ export default function ProgressScreen() {
         {weightPoints.length >= 2 && <LineChart data={weightPoints} goal={kgToDisplay(profile.weightGoalKg, u)} height={130} />}
       </button>
 
-      {/* Esta semana */}
-      <div className="card" style={{ marginBottom: 14 }}>
-        <div className="row between" style={{ marginBottom: 12 }}>
-          <span className="h3">Esta semana</span>
-          <button className="cap t-cal" style={{ fontWeight: 700 }} onClick={() => nav('/reports')}>Reportes ›</button>
+      {/* Calorías de la semana (mismos números que el Plan semanal) */}
+      <WeekCaloriesCard
+        wk={wk}
+        units={u}
+        title="Calorías de la semana"
+        action={<button className="cap t-cal" style={{ fontWeight: 700 }} onClick={() => nav('/planner')}>Plan semanal ›</button>}
+      >
+        <div className="col gap-1" style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
+          <div className="row between">
+            <span className="cap dim">Día a día · objetivo {fmtKcal(dailyGoal)} kcal</span>
+            <span className="cap dim tabnum">{loggedDays}/{weekDays.length || 7} días registrados</span>
+          </div>
+          {barData.length > 0 && <BarChart data={barData} goal={dailyGoal} height={140} color="var(--brand)" />}
         </div>
-        <div className="row between" style={{ marginBottom: 14 }}>
-          <Stat label="Media kcal" value={fmtKcal(avgCal)} accent="var(--cal)" />
-          <Stat label="Días reg." value={`${loggedDays.length}/7`} accent="var(--brand-2)" />
-          <Stat label="Objetivo" value={fmtKcal(goal)} />
-        </div>
-        <BarChart data={barData} goal={goal} height={150} color="var(--brand)" />
-      </div>
+      </WeekCaloriesCard>
 
       <div className="section-title">Seguimiento corporal</div>
       <div className="list">
         <ListRow icon="scale" iconColor="var(--protein)" title="Peso" sub="Tendencia e historial" onClick={() => nav('/weight')} />
         <ListRow icon="ruler" iconColor="var(--carbs)" title="Medidas" sub="Cintura, cadera, % grasa…" onClick={() => nav('/measurements')} />
         <ListRow icon="camera" iconColor="var(--brand)" title="Fotos de progreso" sub="Compara tu evolución" onClick={() => nav('/photos')} />
+      </div>
+
+      <div className="section-title">Social</div>
+      <div className="list">
+        <ListRow icon="users" iconColor="var(--brand)" title="Amigos" sub="Compara tu constancia con la suya" onClick={() => nav('/friends')} />
       </div>
 
       <div className="section-title">Análisis</div>

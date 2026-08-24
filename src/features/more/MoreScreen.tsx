@@ -29,6 +29,10 @@ const LOGGING: Item[] = [
   { icon: 'fasting', title: 'Ayuno intermitente', sub: 'Controla tus ventanas', to: '/fasting' },
 ]
 
+const SOCIAL: Item[] = [
+  { icon: 'users', title: 'Amigos', sub: 'Su racha, calorías, ejercicio y peso', to: '/friends' },
+]
+
 const PROGRESS: Item[] = [
   { icon: 'scale', title: 'Peso', sub: 'Registra tu peso', to: '/weight' },
   { icon: 'ruler', title: 'Medidas', sub: 'Cintura, cadera y más', to: '/measurements' },
@@ -88,6 +92,7 @@ export default function MoreScreen() {
       <Group title="Nutrición" items={NUTRITION} onNav={(to) => nav(to)} />
       <Group title="Registro" items={LOGGING} onNav={(to) => nav(to)} />
       <Group title="Progreso" items={PROGRESS} onNav={(to) => nav(to)} />
+      <Group title="Social" items={SOCIAL} onNav={(to) => nav(to)} />
       <Group title="App" items={appItems} onNav={(to) => nav(to)} />
     </div>
   )

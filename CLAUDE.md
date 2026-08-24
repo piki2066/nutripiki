@@ -11,6 +11,7 @@ Tu trabajo: mantener, mejorar y desplegar esta app cuando Alejandro lo pida, sin
 ## Qué es y por qué así
 
 - **App**: diario de calorías, macros, micronutrientes, peso, medidas, fotos, ejercicio, agua y ayuno intermitente. Todo lo de MyFitnessPal free + premium, gratis y local.
+- **Única excepción a "todo local": Amigos** (desde 2026-08-24). Sube a Supabase SOLO el resumen por día (kcal comidas, objetivo, ejercicio, pasos, peso, si hubo registro). El diario de alimentos, recetas, fotos y medidas NUNCA salen del dispositivo.
 - **Por qué PWA y no app nativa iOS**: el Mac de Alejandro **no tiene Xcode** (solo Command Line Tools), así que no se puede compilar una `.ipa`. La PWA da ~95% de la experiencia (icono, pantalla completa, offline, cámara para el escáner) sin Xcode ni cuenta de desarrollador. Decisión tomada con él el 2026-06-29.
 
 ## Enlaces y cuentas (autorizado por Alejandro)
@@ -23,21 +24,25 @@ Tu trabajo: mantener, mejorar y desplegar esta app cuando Alejandro lo pida, sin
 
 - **React 18 + TypeScript + Vite**, PWA con `vite-plugin-pwa` (service worker + manifest).
 - **Dexie (IndexedDB)** para TODO el almacenamiento local. **ZXing** para el escáner de barras. Gráficas SVG propias (sin libs pesadas).
+- **Supabase** (`@supabase/supabase-js`, cargado con `import()` dinámico) solo para **Amigos**: `src/lib/cloud.ts` + `src/features/friends/`. Esquema y políticas RLS en `docs/supabase/schema.sql`.
 - **OpenFoodFacts** (sin clave) para buscar alimentos y códigos de barras; respuestas cacheadas para offline.
 
 ```
 src/
   components/   UI compartida (Icon, Ring, Sheet, Charts, TabBar, ui.tsx…)
   db/           types.ts · db.ts (esquema Dexie) · seed.ts · init.ts · repo.ts (mutaciones)
-  lib/          nutrition.ts (BMR/TDEE/macros/MET) · selectors.ts · off.ts (OpenFoodFacts)
+  lib/          nutrition.ts (BMR/TDEE/macros/MET) · selectors.ts (+ weekCalories) · off.ts (OpenFoodFacts)
                 · profile.ts · date.ts · units.ts · format.ts · search.ts · export.ts · store.ts (zustand)
-  hooks/        useData.ts (useLiveQuery) · useDebounce.ts
-  features/     onboarding · today · diary · foods · exercise · progress · fasting · reports · goals · settings · more
+                · pwa.ts (instalar la app) · cloud.ts (Supabase, solo Amigos)
+  hooks/        useData.ts (useLiveQuery, useWeekDays) · useDebounce.ts
+  features/     onboarding · today · diary · foods · exercise · progress · planner · fasting · reports
+                · goals · settings · more · install · friends
   styles/       tokens.css (tema) · base.css · components.css · charts.css
 ```
 
 - **Motor de objetivos** (`src/lib/nutrition.ts`): BMR **Mifflin-St Jeor**, TDEE por nivel de actividad, objetivo = TDEE ± déficit por ritmo (7700 kcal ≈ 1 kg), macros por % o gramos. Verificado: hombre 75 kg/175 cm/31 a → BMR 1694, TDEE 2329, objetivo (−0,5 kg/sem) 1780 kcal, macros 223/89/59 g.
 - **Perfil** singleton `id:'me'`. El diario, peso, medidas, etc. se guardan en tablas propias, independientes del perfil.
+- **Semana**: `useWeekDays(weekRange(hoy))` + `weekCalories(profile, days, hoy)` (en `lib/selectors.ts`) dan las calorías semanales que se pintan igual en Hoy, Plan semanal y Progreso (`components/WeekCaloriesCard.tsx`). El presupuesto de cada día sale de `dayCalorieBudget()`, que respeta `addExerciseCalories`.
 
 ## Cómo trabajar (qué hacer SIEMPRE)
 
@@ -57,11 +62,12 @@ src/
 ## Pendiente / próximos pasos
 
 - **Fase 1 — HECHA (2026-06-29):** ampliado el catálogo local de alimentos (~63 → ~238 genéricos españoles, con **ids deterministas** `seed_<slug>` y **top-up idempotente** en el arranque vía `topUpSeeds()` en `db/init.ts`, para que los alimentos nuevos lleguen también a instalaciones con datos). Escáner: si un código no está en local ni en OFF, o es un **código interno de súper** (`isStoreInternalBarcode()` en `lib/off.ts`, EAN-13 que empieza por `2`), se abre `/food/new?barcode=…` para **crear y recordar** el código. Spec y plan en `docs/superpowers/specs/` y `docs/superpowers/plans/` (2026-06-29). Desplegado.
-- **Fase 2 (Supabase) — CANCELADA (2026-06-29):** Alejandro decidió **NO hacer Supabase** ni cuenta/sync en la nube. La app se queda **100% local**. (Si en el futuro pide "que no se pierda y ya", recordar: en iPhone una PWA no puede hacer backup silencioso; la mejor opción sin terceros es **copia a iCloud/Archivos de un toque**; la sync automática multi-dispositivo solo con nube tipo Supabase. Él prefirió quedarse local.)
+- **Amigos con Supabase — HECHO (2026-08-24):** Alejandro **cambió de idea** sobre la nube (antes cancelada el 2026-06-29) y pidió amigos con trayectoria en vivo. Implementado: `src/lib/cloud.ts` (config por `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` o pegada en la app), pantalla `/friends` (código de amigo, solicitudes, muro ordenado por racha, detalle con gráficas), toggle "Compartir mi resumen" en Ajustes y `autoSync()` al arrancar. Esquema + RLS en `docs/supabase/schema.sql`, **verificado con Postgres local** (12 casos: solo tus amigos aceptados ven tus resúmenes, nadie escribe en los de otro, el código de amigo no se puede falsear). **Sigue faltando** que Alejandro cree el proyecto de Supabase y dé la URL + clave anon para compilarlas en el build (si no, la pantalla de Amigos enseña cómo conectarla).
+- **Nota de sincronización:** el diario en sí NO se sincroniza entre dispositivos; sigue siendo local. La nube es solo para el muro de amigos.
 - **Ronda de mejoras grande — HECHA (2026-06-29):** rebrand a **NutriPiki** + **tema premium** (negro mate, blanco mármol, acento champán; `styles/tokens.css`, acento por defecto `#c8a96a`, `migrateTheme()` migra el azul viejo). Catálogo ampliado a **~343 alimentos**. **Jiu-jitsu brasileño y artes marciales** con MET del Compendium + `topUpExercises()`. Nuevas funciones (todas locales): **tendencia de peso EMA + previsión de fecha de meta** (`lib/analytics.ts`, `WeightScreen`), **TDEE adaptativo / gasto real** aplicable al objetivo + **adherencia + heatmap de constancia + consejos** (`features/reports/InsightsScreen.tsx`, ruta `/insights`), **fases del ayuno** (`FastingScreen`), **copiar comidas de ayer** (diario vacío), **sello Nutri-Score / aviso NOVA** en resultados OFF. Motor de nutrición **verificado con tests**: `npm test` (`scripts/test-nutrition.mjs`); el caso 75/175/31 da 1694/2329/1780 y macros 223/89/59. `npm run build` debe seguir pasando.
 - **Incidencia (2026-06-29):** Alejandro perdió datos por el lío de dos enlaces (LAN vs Pages). **Regla vigente:** solo el enlace de internet instalado (el ICONO, no Safari: en iPhone son almacenamientos separados). Recomendarle **exportar (Más → Ajustes → Exportar) a iCloud** de vez en cuando como respaldo.
 - Posible mejora pedida: **varios perfiles en un mismo dispositivo** (selector de persona) — solo si confirma que comparten un teléfono; el caso normal (cada uno en su móvil) ya funciona compartiendo el enlace.
 
 ## Privacidad
 
-100% local. La única red que usa la app es OpenFoodFacts (buscar alimentos). Ningún dato del usuario se sube a ningún sitio; lo público es solo el armazón de la app.
+Local por defecto. La app usa la red para: **OpenFoodFacts** (buscar alimentos) y, **solo si el usuario activa Amigos**, Supabase para subir el *resumen diario* (kcal comidas, objetivo, ejercicio, pasos, peso y si registró). El diario de alimentos, recetas, fotos y medidas **nunca** salen del dispositivo. Compartir se puede apagar en **Ajustes → Amigos → Compartir mi resumen** (apagarlo borra lo ya subido).

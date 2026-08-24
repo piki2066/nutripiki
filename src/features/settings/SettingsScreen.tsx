@@ -1,4 +1,5 @@
 import { type ChangeEvent, type ReactNode, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AppHeader } from '@/components/AppHeader'
 import { Icon, type IconName } from '@/components/Icon'
 import { Sheet } from '@/components/Sheet'
@@ -9,12 +10,15 @@ import { db } from '@/db/db'
 import { useUI } from '@/lib/store'
 import { todayKey } from '@/lib/date'
 import type { AppSettings } from '@/db/types'
+import { useCloud, wipeMyStats, pushStats } from '@/lib/cloud'
 
 // Acentos premium: champán, oro viejo, bronce, esmeralda, grafito, burdeos.
 const ACCENTS = ['#c8a96a', '#b0894f', '#a9745a', '#6fae8e', '#8a8f98', '#9e5d63']
 
 export default function SettingsScreen() {
+  const nav = useNavigate()
   const settings = useSettings()
+  const cloud = useCloud()
   const toast = useUI((s) => s.toast)
   const fileRef = useRef<HTMLInputElement>(null)
   const [pendingImport, setPendingImport] = useState<Record<string, unknown> | null>(null)
@@ -164,6 +168,34 @@ export default function SettingsScreen() {
         />
       </div>
 
+      {/* Amigos */}
+      <div className="section-title">Amigos</div>
+      <div className="list">
+        <ActionRow
+          icon="users"
+          title="Amigos"
+          sub={cloud.user ? 'Tu código, solicitudes y su progreso' : 'Conecta y añade a tus amigos'}
+          onClick={() => nav('/friends')}
+        />
+        {cloud.user && (
+          <ToggleRow
+            icon="cloud"
+            title="Compartir mi resumen"
+            sub="Calorías, ejercicio, pasos y peso de cada día"
+            on={settings.cloudShare !== false}
+            onChange={async (cloudShare) => {
+              await saveSettings({ cloudShare })
+              try {
+                if (cloudShare) { await pushStats(30); toast('Compartiendo de nuevo', { icon: 'check' }) }
+                else { await wipeMyStats(); toast('Dejaste de compartir y se borró lo subido', { icon: 'info' }) }
+              } catch {
+                toast('No se pudo contactar con la nube', { icon: 'info' })
+              }
+            }}
+          />
+        )}
+      </div>
+
       {/* Datos */}
       <div className="section-title">Datos</div>
       <div className="list">
@@ -179,7 +211,10 @@ export default function SettingsScreen() {
       <div className="section-title">Acerca de</div>
       <div className="card col gap-1">
         <span className="h3">NutriPiki 1.0</span>
-        <span className="cap dim">100% local y privado. Tus datos nunca salen de este dispositivo.</span>
+        <span className="cap dim">
+          Tu diario vive en este dispositivo. Solo si activas <b>Amigos</b> se sube el resumen de cada día
+          (calorías, ejercicio, pasos y peso); tus alimentos, recetas y fotos nunca salen de aquí.
+        </span>
       </div>
 
       {/* Confirmar importación */}

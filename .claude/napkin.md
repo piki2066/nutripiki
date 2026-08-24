@@ -6,7 +6,9 @@
 3. **[2026-08-24] Instalación PWA centralizada en `src/lib/pwa.ts`.** Captura `beforeinstallprompt` al cargar el módulo (por eso se importa desde `main.tsx`, antes que nada) y expone `useInstall()` / `promptInstall()` / `isStandalone()`.
    Do instead: reutilizar `useInstall()` y `<InstallPanel />` (`src/features/install/`) en vez de volver a detectar plataforma o duplicar los pasos de iOS/Android.
 4. **[2026-08-24] Datos de una semana: `useWeekDays(week)` + `weekCalories(profile, days, hoy)`.**
-   Do instead: no volver a montar bucles de `db.foodEntries.where('date')` por pantalla; el hook ya devuelve `items`, comido, planificado y ejercicio por día.
+   Do instead: no volver a montar bucles de `db.foodEntries.where('date')` por pantalla; el hook ya devuelve `items`, comido, planificado y ejercicio por día. Para pintarlo, `<WeekCaloriesCard>` (acepta `action` y `children`).
+5. **[2026-08-24] Nube (solo Amigos) en `src/lib/cloud.ts`.** `@supabase/supabase-js` entra por `import()` dinámico (chunk aparte de ~58 KB gzip); config por `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` o pegada en la app.
+   Do instead: nunca importar supabase-js de forma estática ni subir nada que no sea el resumen diario de `collectStats()`.
 
 ## Domain Behavior Guardrails
 1. **[2026-08-24] El presupuesto de calorías de un día es `dayCalorieBudget(profile, fecha, kcalEjercicio)`.** Suma el ejercicio SOLO si `profile.addExerciseCalories`, igual que `calorieSummary` en Hoy.
@@ -17,5 +19,7 @@
 ## Verificación
 1. `npm run build` siempre antes de dar nada por bueno; `npm test` para el motor de nutrición (incluye las sumas semanales).
 2. Verificación de UI real sin navegador interactivo: `npm run preview` + Chrome headless con `--remote-debugging-port` y CDP (`Runtime.evaluate` con el setter nativo de `HTMLInputElement.prototype.value` + evento `input` burbujeante para simular tecleo en React; para blur, despachar `focusout` burbujeante — `element.blur()` no es fiable en headless).
-3. **[2026-08-24] Atajos para probar pantallas que necesitan datos.** El onboarding se completa por CDP haciendo `click()` sobre botones buscados por `innerText`; y se pueden inyectar comidas directamente en IndexedDB (`indexedDB.open('nutripal')` → store `foodEntries`) y recargar, en vez de teclear por la UI.
+3. **[2026-08-24] El SQL de Supabase se puede probar en serio sin tocar el proyecto real.** `initdb` + `pg_ctl` en un directorio temporal (socket en `/tmp/npg`: la ruta del scratchpad pasa de 103 bytes y falla), un stub con `auth.users` + `auth.uid()` leyendo `request.jwt.claim.sub`, roles `anon`/`authenticated`, y luego `set role authenticated` + `set request.jwt.claim.sub` para simular a cada usuario.
+   Do instead: ejecutar `docs/supabase/schema.sql` ahí y comprobar las políticas RLS con casos positivos y negativos antes de dárselo a Alejandro.
+4. **[2026-08-24] Atajos para probar pantallas que necesitan datos.** El onboarding se completa por CDP haciendo `click()` sobre botones buscados por `innerText`; y se pueden inyectar comidas directamente en IndexedDB (`indexedDB.open('nutripal')` → store `foodEntries`) y recargar, en vez de teclear por la UI.
    Do instead: inyectar → `Page.reload` → volcar `document.body.innerText` y comparar cifras con las esperadas a mano.

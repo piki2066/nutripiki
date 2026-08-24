@@ -13,15 +13,16 @@
     "deploy": "GH_PAGES=1 npm run build && touch dist/.nojekyll && cd dist && git init -q && git add -A && git -c commit.gpgsign=false commit -q -m deploy && git push -f https://github.com/piki2066/nutripiki.git HEAD:gh-pages && cd .. && rm -rf dist/.git && echo '\\nDesplegado: https://piki2066.github.io/nutripiki/'"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
+    "date-fns": "^4.1.0",
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^1.1.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
-    "zustand": "^5.0.2",
-    "date-fns": "^4.1.0",
-    "@zxing/browser": "^0.1.5",
-    "@zxing/library": "^0.21.3"
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

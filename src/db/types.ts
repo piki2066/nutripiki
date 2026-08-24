@@ -327,4 +327,6 @@ export interface AppSettings {
   showMicros: boolean
   netCarbsMode: boolean
   diaryNutrientColumns: (keyof Nutrients)[] // columnas visibles en el diario
+  /** Compartir el resumen diario con los amigos (nube). Por defecto sí. */
+  cloudShare?: boolean
 }

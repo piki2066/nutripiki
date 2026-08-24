@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { seedIfEmpty, topUpSeeds, topUpExercises, migrateTheme } from './db/init'
+import { autoSync } from './lib/cloud'
 import { useProfile, useSettings } from './hooks/useData'
 import { TabBar } from './components/TabBar'
 import { Toaster } from './components/Toaster'
@@ -28,6 +29,7 @@ import ProfileScreen from './features/goals/ProfileScreen'
 import SettingsScreen from './features/settings/SettingsScreen'
 import OnboardingScreen from './features/onboarding/OnboardingScreen'
 import InstallScreen from './features/install/InstallScreen'
+import FriendsScreen from './features/friends/FriendsScreen'
 
 export default function App() {
   const profile = useProfile()
@@ -48,6 +50,8 @@ export default function App() {
         topUpSeeds().catch((e) => console.error('topUpSeeds', e))
         topUpExercises().catch((e) => console.error('topUpExercises', e))
         migrateTheme().catch((e) => console.error('migrateTheme', e))
+        // Amigos: sube el resumen diario si hay sesión y el usuario lo comparte.
+        autoSync()
       })
   }, [])
 
@@ -100,6 +104,7 @@ export default function App() {
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
         <Route path="/install" element={<InstallScreen />} />
+        <Route path="/friends" element={<FriendsScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {showTabs && <TabBar />}

@@ -8,7 +8,7 @@ export type IconName =
   | 'copy' | 'star' | 'info' | 'sun' | 'moon' | 'dumbbell' | 'water' | 'steps'
   | 'fasting' | 'recipe' | 'meal' | 'calendar' | 'download' | 'chart' | 'note'
   | 'undo' | 'bell' | 'water-drop' | 'minus' | 'heart' | 'bolt' | 'list'
-  | 'apple' | 'cutlery' | 'trophy' | 'share' | 'lock' | 'dots-vertical' | 'phone'
+  | 'apple' | 'cutlery' | 'trophy' | 'share' | 'lock' | 'dots-vertical' | 'phone' | 'users' | 'cloud' | 'logout' | 'refresh'
 
 const P: Record<IconName, string> = {
   today: 'M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
@@ -65,6 +65,10 @@ const P: Record<IconName, string> = {
   lock: 'M6 11V8a6 6 0 0 1 12 0v3M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z',
   'dots-vertical': 'M12 5.01V5M12 12.01V12M12 19.01V19',
   phone: 'M7.5 2h9a1.5 1.5 0 0 1 1.5 1.5v17a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 20.5v-17A1.5 1.5 0 0 1 7.5 2zM10 18.5h4',
+  users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M17 4.5a3.5 3.5 0 0 1 0 7M18.5 21H22a5 5 0 0 0-3.6-4.8',
+  cloud: 'M6.5 18.5a4.5 4.5 0 0 1-.4-9 6 6 0 0 1 11.6-1.3 4 4 0 0 1-.2 10.3z',
+  logout: 'M15 12H3M6.5 8.5 3 12l3.5 3.5M10 4h9a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-9',
+  refresh: 'M3.5 12a8.5 8.5 0 0 1 14.6-6M20.5 12a8.5 8.5 0 0 1-14.6 6M18.6 2.6V6.5h-3.9M5.4 21.4v-3.9h3.9',
 }
 
 interface Props {
