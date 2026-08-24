@@ -8,7 +8,7 @@ export type IconName =
   | 'copy' | 'star' | 'info' | 'sun' | 'moon' | 'dumbbell' | 'water' | 'steps'
   | 'fasting' | 'recipe' | 'meal' | 'calendar' | 'download' | 'chart' | 'note'
   | 'undo' | 'bell' | 'water-drop' | 'minus' | 'heart' | 'bolt' | 'list'
-  | 'apple' | 'cutlery' | 'trophy' | 'share' | 'lock'
+  | 'apple' | 'cutlery' | 'trophy' | 'share' | 'lock' | 'dots-vertical' | 'phone'
 
 const P: Record<IconName, string> = {
   today: 'M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
@@ -63,6 +63,8 @@ const P: Record<IconName, string> = {
   trophy: 'M7 4h10v4a5 5 0 0 1-10 0zM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M9 20h6M12 13v4',
   share: 'M12 3v12M8 7l4-4 4 4M5 13v6a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6',
   lock: 'M6 11V8a6 6 0 0 1 12 0v3M5 11h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z',
+  'dots-vertical': 'M12 5.01V5M12 12.01V12M12 19.01V19',
+  phone: 'M7.5 2h9a1.5 1.5 0 0 1 1.5 1.5v17a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 6 20.5v-17A1.5 1.5 0 0 1 7.5 2zM10 18.5h4',
 }
 
 interface Props {

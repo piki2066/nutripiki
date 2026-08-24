@@ -9,10 +9,16 @@ import {
 } from '@/lib/nutrition'
 import type { ActivityLevel, GoalType, Sex } from '@/db/types'
 import { fmtKcal } from '@/lib/format'
+import { useInstall } from '@/lib/pwa'
+import { InstallPanel } from '../install/InstallPanel'
 
-const STEPS = ['Bienvenida', 'Tú', 'Cuerpo', 'Objetivo', 'Ritmo', 'Actividad', 'Plan']
+const BASE_STEPS = ['Bienvenida', 'Tú', 'Cuerpo', 'Objetivo', 'Ritmo', 'Actividad', 'Plan'] as const
 
 export default function OnboardingScreen() {
+  const { installed } = useInstall()
+  // Se congela en el primer render: si instala a mitad del onboarding, el paso
+  // no debe desaparecer bajo sus pies (cambiaría los índices).
+  const [withInstallStep] = useState(() => !installed)
   const [step, setStep] = useState(0)
   const [units, setUnits] = useState<'metric' | 'imperial'>('metric')
   const [name, setName] = useState('')
@@ -24,6 +30,14 @@ export default function OnboardingScreen() {
   const [goalType, setGoalType] = useState<GoalType>('lose')
   const [paceKgPerWeek, setPace] = useState(0.5)
   const [activityLevel, setActivity] = useState<ActivityLevel>('light')
+
+  // Si aún no está instalada, se enseña a instalarla al principio: en iPhone
+  // el icono guarda sus propios datos, así que conviene instalar ANTES de
+  // rellenar el perfil (si no, habría que repetirlo dentro de la app).
+  const STEPS: string[] = withInstallStep
+    ? [BASE_STEPS[0], 'Instalar', ...BASE_STEPS.slice(1)]
+    : [...BASE_STEPS]
+  const key = STEPS[step]
 
   const age = ageFromBirth(birthDate)
   const bmr = bmrMifflin(sex, weightStartKg, heightCm, age)
@@ -45,7 +59,7 @@ export default function OnboardingScreen() {
   }
 
   const canNext = () => {
-    if (step === 1) return name.trim().length > 0
+    if (key === 'Tú') return name.trim().length > 0
     return true
   }
 
@@ -67,7 +81,7 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {step === 0 && (
+      {key === 'Bienvenida' && (
         <div className="col" style={{ minHeight: '70vh', justifyContent: 'center', textAlign: 'center', gap: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'center' }}><BrandEmblem size={84} /></div>
           <Wordmark size="lg" style={{ alignSelf: 'center', marginTop: 4 }} />
@@ -87,7 +101,20 @@ export default function OnboardingScreen() {
         </div>
       )}
 
-      {step === 1 && (
+      {key === 'Instalar' && (
+        <Step title="Instálala en tu móvil" sub="Un icono en tu pantalla de inicio, como cualquier otra app.">
+          <div className="row gap-2" style={{ alignItems: 'flex-start' }}>
+            <Icon name="info" size={18} color="var(--brand)" style={{ flexShrink: 0, marginTop: 1 }} />
+            <span className="cap">
+              Hazlo <b>ahora, antes de rellenar tus datos</b>: en el iPhone, la app instalada guarda su propio diario,
+              así que lo que escribas en el navegador no aparecerá luego en el icono.
+            </span>
+          </div>
+          <InstallPanel />
+        </Step>
+      )}
+
+      {key === 'Tú' && (
         <Step title="¿Cómo te llamas?" sub="Para personalizar tu experiencia.">
           <div className="field">
             <input className="input" placeholder="Tu nombre" value={name} autoFocus
@@ -109,7 +136,7 @@ export default function OnboardingScreen() {
         </Step>
       )}
 
-      {step === 2 && (
+      {key === 'Cuerpo' && (
         <Step title="Tu cuerpo" sub="Edad y altura para el cálculo metabólico.">
           <div className="field">
             <span className="label">Fecha de nacimiento ({age} años)</span>
@@ -121,7 +148,7 @@ export default function OnboardingScreen() {
         </Step>
       )}
 
-      {step === 3 && (
+      {key === 'Objetivo' && (
         <Step title="Peso y objetivo" sub="¿Dónde estás y a dónde quieres llegar?">
           <NumberField label="Peso actual" value={weightStartKg} unit="kg" min={35} max={250} step={0.1}
             onChange={setWeightStartKg} />
@@ -150,7 +177,7 @@ export default function OnboardingScreen() {
         </Step>
       )}
 
-      {step === 4 && (
+      {key === 'Ritmo' && (
         <Step title="Ritmo semanal" sub={goalType === 'gain' ? 'Cuánto quieres ganar por semana.' : 'Cuánto quieres perder por semana.'}>
           {goalType === 'maintain' ? (
             <p className="muted">Has elegido mantener tu peso. Tu objetivo serán tus calorías de mantenimiento.</p>
@@ -176,7 +203,7 @@ export default function OnboardingScreen() {
         </Step>
       )}
 
-      {step === 5 && (
+      {key === 'Actividad' && (
         <Step title="Nivel de actividad" sub="Sin contar el ejercicio que registres (modo NEAT, como MyFitnessPal).">
           <div className="col gap-2">
             {(Object.keys(ACTIVITY_LABELS) as ActivityLevel[]).map((a) => (
@@ -191,7 +218,7 @@ export default function OnboardingScreen() {
         </Step>
       )}
 
-      {step === 6 && (
+      {key === 'Plan' && (
         <Step title="Tu plan diario" sub="Calculado con la fórmula Mifflin-St Jeor.">
           <div className="card card--glow col gap-3" style={{ alignItems: 'center', textAlign: 'center' }}>
             <span className="label">Objetivo de calorías</span>
@@ -222,7 +249,7 @@ export default function OnboardingScreen() {
           </button>
         ) : (
           <button className="btn btn--primary btn--full" onClick={next} disabled={!canNext()}>
-            {step === 0 ? 'Comenzar' : 'Continuar'}
+            {step === 0 ? 'Comenzar' : key === 'Instalar' ? 'Ya está, continuar' : 'Continuar'}
           </button>
         )}
         {step > 0 && (

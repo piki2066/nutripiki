@@ -1,22 +1,18 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useLiveQuery } from 'dexie-react-hooks'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { AppHeader } from '@/components/AppHeader'
 import { Icon } from '@/components/Icon'
-import { db } from '@/db/db'
-import type { FoodEntry } from '@/db/types'
-import { useProfile } from '@/hooks/useData'
-import { sumNutrients } from '@/lib/nutrition'
-import { exerciseCalories, effectiveCalorieGoal, isEaten } from '@/lib/selectors'
+import { useProfile, useWeekDays } from '@/hooks/useData'
+import { dayCalorieBudget, weekCalories, isEaten, type WeekCalories, type WeekDayData } from '@/lib/selectors'
+import { Stat } from '@/components/ui'
+import type { Units } from '@/db/types'
 import { copyWeekPlan, clearDayPlan, setEntryDone, deleteEntry } from '@/db/repo'
 import { weekRange, shiftKey, todayKey, parseKey } from '@/lib/date'
 import { fmtKcal, fmtNum } from '@/lib/format'
 import { kgToDisplay, weightUnit } from '@/lib/units'
 import { useUI } from '@/lib/store'
-
-interface DayPlan { date: string; items: FoodEntry[]; planKcal: number; eatenKcal: number; exKcal: number; hasEx: boolean }
 
 export default function PlannerScreen() {
   const nav = useNavigate()
@@ -29,32 +25,18 @@ export default function PlannerScreen() {
   const startsMonday = profile?.weeklyStartsMonday ?? true
   const week = weekRange(anchor, startsMonday)
 
-  const data = useLiveQuery(async () => {
-    const out: DayPlan[] = []
-    for (const d of week) {
-      const items = await db.foodEntries.where('date').equals(d).toArray()
-      const ex = await db.exerciseEntries.where('date').equals(d).toArray()
-      const stp = await db.steps.get(d)
-      out.push({
-        date: d,
-        items: items.sort((a, b) => a.createdAt - b.createdAt),
-        planKcal: Math.round(sumNutrients(items.map((x) => x.nutrients)).calories),
-        eatenKcal: Math.round(sumNutrients(items.filter(isEaten).map((x) => x.nutrients)).calories),
-        exKcal: exerciseCalories(ex, stp?.caloriesBurned ?? 0),
-        hasEx: ex.length > 0,
-      })
-    }
-    return out
-  }, [week.join(',')], [])
+  const data = useWeekDays(week)
 
   if (!profile) return null
   const u = profile.units
-  const days: DayPlan[] = data ?? week.map((d) => ({ date: d, items: [], planKcal: 0, eatenKcal: 0, exKcal: 0, hasEx: false }))
-  const dayBudget = (d: DayPlan) => effectiveCalorieGoal(profile, d.date) + d.exKcal
+  const days: WeekDayData[] = data
+    ?? week.map((d) => ({ date: d, items: [], plannedKcal: 0, eatenKcal: 0, exerciseKcal: 0, hasExercise: false }))
+  const dayBudget = (d: WeekDayData) => dayCalorieBudget(profile, d.date, d.exerciseKcal)
+  const wk = weekCalories(profile, days, todayKey())
 
-  const plannedDays = days.filter((d) => d.planKcal > 0)
-  const avgPlan = plannedDays.length ? Math.round(plannedDays.reduce((s, d) => s + d.planKcal, 0) / plannedDays.length) : 0
-  const daysOk = plannedDays.filter((d) => d.planKcal <= dayBudget(d)).length
+  const plannedDays = days.filter((d) => d.plannedKcal > 0)
+  const avgPlan = plannedDays.length ? Math.round(plannedDays.reduce((s, d) => s + d.plannedKcal, 0) / plannedDays.length) : 0
+  const daysOk = plannedDays.filter((d) => d.plannedKcal <= dayBudget(d)).length
   const weeklyKg = plannedDays.length ? ((avgPlan - profile.tdee) * 7) / 7700 : 0
   const trend = weeklyKg <= -0.05 ? 'down' : weeklyKg >= 0.05 ? 'up' : 'flat'
 
@@ -92,6 +74,9 @@ export default function PlannerScreen() {
         <button className="icon-btn" onClick={() => setAnchor(shiftKey(anchor, 7))} aria-label="Semana siguiente"><Icon name="chevron-right" size={22} /></button>
       </div>
 
+      {/* Calorías de toda la semana */}
+      <WeekCaloriesCard wk={wk} units={u} />
+
       {/* Resumen + feedback */}
       <div className="card card--glow col gap-3" style={{ marginBottom: 14 }}>
         <div className="row between">
@@ -116,10 +101,10 @@ export default function PlannerScreen() {
       <div className="col gap-2">
         {days.map((d) => {
           const budget = dayBudget(d)
-          const planOver = d.planKcal > budget
-          const has = d.planKcal > 0
+          const planOver = d.plannedKcal > budget
+          const has = d.plannedKcal > 0
           const pct = budget > 0 ? Math.min(100, (d.eatenKcal / budget) * 100) : 0
-          const planPct = budget > 0 ? Math.min(100, (d.planKcal / budget) * 100) : 0
+          const planPct = budget > 0 ? Math.min(100, (d.plannedKcal / budget) * 100) : 0
           const isToday = d.date === todayKey()
           const open = expanded === d.date
           return (
@@ -132,7 +117,7 @@ export default function PlannerScreen() {
                 <div className="row gap-2" style={{ alignItems: 'center' }}>
                   <div className="col" style={{ alignItems: 'flex-end', gap: 1 }}>
                     <span className="tabnum" style={{ fontWeight: 800, fontSize: 16, color: !has ? 'var(--text-3)' : 'var(--text)' }}>
-                      {fmtKcal(d.eatenKcal)} <span className="muted" style={{ fontSize: 12, fontWeight: 600 }}>/ {fmtKcal(d.planKcal)}</span>
+                      {fmtKcal(d.eatenKcal)} <span className="muted" style={{ fontSize: 12, fontWeight: 600 }}>/ {fmtKcal(d.plannedKcal)}</span>
                     </span>
                     <span className="cap dim tabnum">plan · obj. {fmtKcal(budget)}</span>
                   </div>
@@ -147,12 +132,12 @@ export default function PlannerScreen() {
               </div>
 
               <div className="row between" style={{ alignItems: 'center' }}>
-                <span className="cap" style={{ color: d.hasEx ? 'var(--brand-2)' : 'var(--text-3)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <Icon name="dumbbell" size={13} color={d.hasEx ? 'var(--brand-2)' : 'var(--text-3)'} />
-                  {d.hasEx ? `Deporte · +${fmtKcal(d.exKcal)} kcal` : 'Descanso'}
+                <span className="cap" style={{ color: d.hasExercise ? 'var(--brand-2)' : 'var(--text-3)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <Icon name="dumbbell" size={13} color={d.hasExercise ? 'var(--brand-2)' : 'var(--text-3)'} />
+                  {d.hasExercise ? `Deporte · +${fmtKcal(d.exerciseKcal)} kcal` : 'Descanso'}
                 </span>
                 <span className="cap" style={{ fontWeight: 700, color: !has ? 'var(--text-3)' : planOver ? 'var(--bad)' : 'var(--good)' }}>
-                  {!has ? 'Sin plan' : planOver ? `Plan se pasa ${fmtKcal(d.planKcal - budget)}` : `Plan cumple · ${fmtKcal(budget - d.planKcal)} libre`}
+                  {!has ? 'Sin plan' : planOver ? `Plan se pasa ${fmtKcal(d.plannedKcal - budget)}` : `Plan cumple · ${fmtKcal(budget - d.plannedKcal)} libre`}
                 </span>
               </div>
 
@@ -196,6 +181,75 @@ export default function PlannerScreen() {
       <button className="btn btn--grad btn--full" style={{ marginTop: 16 }} onClick={duplicateNext}>
         <Icon name="copy" size={18} /> Duplicar a la semana siguiente
       </button>
+    </div>
+  )
+}
+
+/** Suma de calorías de los 7 días frente al objetivo semanal. */
+function WeekCaloriesCard({ wk, units }: { wk: WeekCalories; units: Units }) {
+  const pct = wk.budget > 0 ? Math.min(100, (wk.eaten / wk.budget) * 100) : 0
+  const planPct = wk.budget > 0 ? Math.min(100, (wk.planned / wk.budget) * 100) : 0
+  const over = wk.eaten > wk.budget
+  const nothing = wk.eaten === 0 && wk.planned === 0
+  const kgTxt = `${fmtNum(kgToDisplay(Math.abs(wk.balanceKg), units), 2)} ${weightUnit(units)}`
+
+  const insight = (() => {
+    if (nothing) return 'Aún no hay nada registrado en esta semana.'
+    if (wk.isPast) {
+      return wk.balance >= 0
+        ? `Semana cerrada con ${fmtKcal(wk.balance)} kcal de margen (≈ ${kgTxt} menos de lo previsto).`
+        : `Semana cerrada con ${fmtKcal(-wk.balance)} kcal de más (≈ ${kgTxt} por encima).`
+    }
+    if (!wk.isCurrent && wk.elapsedDays === 0) {
+      return `Semana por empezar. Tienes ${fmtKcal(wk.budget)} kcal de presupuesto para los 7 días.`
+    }
+    const head = wk.balance >= 0
+      ? `Hasta hoy vas ${fmtKcal(wk.balance)} kcal por debajo de tu objetivo.`
+      : `Hasta hoy llevas ${fmtKcal(-wk.balance)} kcal de más.`
+    if (wk.remainingDays <= 0) return head
+    const tail = wk.left >= 0
+      ? ` Quedan ${wk.remainingDays} ${wk.remainingDays === 1 ? 'día' : 'días'}: puedes tomar ~${fmtKcal(wk.perRemainingDay)} kcal/día.`
+      : ` Ya te has pasado ${fmtKcal(-wk.left)} kcal del presupuesto de la semana.`
+    return head + tail
+  })()
+
+  const good = wk.balance >= 0 && wk.left >= 0
+
+  return (
+    <div className="card card--glow col gap-3" style={{ marginBottom: 14 }}>
+      <div className="row between" style={{ alignItems: 'flex-start' }}>
+        <div className="col" style={{ gap: 2 }}>
+          <span className="label" style={{ margin: 0 }}>Calorías de la semana</span>
+          <span className="big-num t-cal" style={{ fontSize: 30, color: over ? 'var(--bad)' : undefined }}>
+            {fmtKcal(wk.eaten)} <span className="muted" style={{ fontSize: 13 }}>de {fmtKcal(wk.budget)} kcal</span>
+          </span>
+        </div>
+        <span className="badge badge--soft tabnum" style={{ color: over ? 'var(--bad)' : 'var(--text-2)' }}>
+          {Math.round(wk.budget > 0 ? (wk.eaten / wk.budget) * 100 : 0)}%
+        </span>
+      </div>
+
+      {/* Barra: comido (sólido) sobre el total apuntado (tenue) */}
+      <div className="macro-bar" style={{ position: 'relative' }}>
+        <span style={{ width: `${planPct}%`, background: 'var(--fill-2)', position: 'absolute', inset: 0, borderRadius: 999 }} />
+        <span style={{ width: `${pct}%`, background: over ? 'var(--bad)' : 'var(--brand)' }} />
+      </div>
+
+      <div className="row between" style={{ borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
+        <Stat label="Media/día" value={fmtKcal(wk.avgPerDay)} />
+        <Stat label="Con el plan" value={fmtKcal(wk.planned)} />
+        <Stat
+          label={wk.left >= 0 ? 'Te quedan' : 'De más'}
+          value={fmtKcal(Math.abs(wk.left))}
+          accent={wk.left >= 0 ? 'var(--good)' : 'var(--bad)'}
+        />
+      </div>
+
+      <div className="row gap-2" style={{ alignItems: 'flex-start', borderTop: '1px solid var(--hairline)', paddingTop: 12 }}>
+        <Icon name={nothing ? 'info' : good ? 'check-circle' : 'info'} size={18}
+          color={nothing ? 'var(--text-3)' : good ? 'var(--good)' : 'var(--warn)'} style={{ flexShrink: 0, marginTop: 1 }} />
+        <span className="cap">{insight}</span>
+      </div>
     </div>
   )
 }

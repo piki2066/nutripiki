@@ -27,6 +27,7 @@ import GoalsScreen from './features/goals/GoalsScreen'
 import ProfileScreen from './features/goals/ProfileScreen'
 import SettingsScreen from './features/settings/SettingsScreen'
 import OnboardingScreen from './features/onboarding/OnboardingScreen'
+import InstallScreen from './features/install/InstallScreen'
 
 export default function App() {
   const profile = useProfile()
@@ -98,6 +99,7 @@ export default function App() {
         <Route path="/goals" element={<GoalsScreen />} />
         <Route path="/profile" element={<ProfileScreen />} />
         <Route path="/settings" element={<SettingsScreen />} />
+        <Route path="/install" element={<InstallScreen />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {showTabs && <TabBar />}

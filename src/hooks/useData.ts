@@ -2,6 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/db/db'
 import type { AppSettings, UserProfile } from '@/db/types'
 import { DEFAULT_SETTINGS } from '@/db/init'
+import { sumNutrients } from '@/lib/nutrition'
+import { exerciseCalories, isEaten, type WeekDayData } from '@/lib/selectors'
 
 export function useProfile(): UserProfile | undefined | null {
   // undefined = cargando, null = no existe (sin onboarding)
@@ -76,4 +78,26 @@ export function useAllLoggedDates() {
     const entries = await db.foodEntries.orderBy('date').keys()
     return new Set(entries as string[])
   }, [], new Set<string>())
+}
+
+/** Datos de calorías/ejercicio de una semana completa (para el plan y el resumen semanal). */
+export function useWeekDays(week: string[]) {
+  return useLiveQuery(async () => {
+    const out: WeekDayData[] = []
+    for (const date of week) {
+      const items = (await db.foodEntries.where('date').equals(date).toArray())
+        .sort((a, b) => a.createdAt - b.createdAt)
+      const ex = await db.exerciseEntries.where('date').equals(date).toArray()
+      const stp = await db.steps.get(date)
+      out.push({
+        date,
+        items,
+        eatenKcal: Math.round(sumNutrients(items.filter(isEaten).map((x) => x.nutrients)).calories),
+        plannedKcal: Math.round(sumNutrients(items.map((x) => x.nutrients)).calories),
+        exerciseKcal: exerciseCalories(ex, stp?.caloriesBurned ?? 0),
+        hasExercise: ex.length > 0,
+      })
+    }
+    return out
+  }, [week.join(',')])
 }

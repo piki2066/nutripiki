@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import App from './App'
+import './lib/pwa' // captura 'beforeinstallprompt' lo antes posible
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/components.css'

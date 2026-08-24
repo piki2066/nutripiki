@@ -4,6 +4,7 @@ import { Icon, type IconName } from '@/components/Icon'
 import { ListRow } from '@/components/ui'
 import { useProfile } from '@/hooks/useData'
 import { fmtKcal } from '@/lib/format'
+import { useInstall } from '@/lib/pwa'
 
 interface Item {
   icon: IconName
@@ -42,6 +43,17 @@ const APP: Item[] = [
 export default function MoreScreen() {
   const nav = useNavigate()
   const profile = useProfile()
+  const { installed } = useInstall()
+
+  const appItems: Item[] = [
+    ...APP,
+    {
+      icon: 'download',
+      title: 'Instalar app',
+      sub: installed ? 'Ya está instalada en este dispositivo' : 'Añade el icono a tu pantalla de inicio',
+      to: '/install',
+    },
+  ]
 
   const name = profile?.name?.trim() || 'Tu perfil'
   const initial = (profile?.name?.trim()?.[0] ?? '?').toUpperCase()
@@ -76,7 +88,7 @@ export default function MoreScreen() {
       <Group title="Nutrición" items={NUTRITION} onNav={(to) => nav(to)} />
       <Group title="Registro" items={LOGGING} onNav={(to) => nav(to)} />
       <Group title="Progreso" items={PROGRESS} onNav={(to) => nav(to)} />
-      <Group title="App" items={APP} onNav={(to) => nav(to)} />
+      <Group title="App" items={appItems} onNav={(to) => nav(to)} />
     </div>
   )
 }

@@ -6,10 +6,11 @@ import { Ring } from '@/components/Ring'
 import { MacroBar } from '@/components/ui'
 import {
   useProfile, useDayEntries, useDayExercise, useDayWater, useDaySteps,
-  useWeights, useAllLoggedDates,
+  useWeights, useAllLoggedDates, useWeekDays,
 } from '@/hooks/useData'
-import { dayTotals, exerciseCalories, calorieSummary, loggingStreak, latestWeight } from '@/lib/selectors'
-import { todayKey } from '@/lib/date'
+import { dayTotals, exerciseCalories, calorieSummary, loggingStreak, latestWeight, weekCalories } from '@/lib/selectors'
+import { todayKey, weekRange } from '@/lib/date'
+import { InstallBanner } from '@/features/install/InstallBanner'
 import { fmtKcal, fmtNum } from '@/lib/format'
 import { useUI } from '@/lib/store'
 import { kgToDisplay, weightUnit } from '@/lib/units'
@@ -27,8 +28,15 @@ export default function TodayScreen() {
   const weights = useWeights() ?? []
   const loggedDates = useAllLoggedDates() ?? new Set<string>()
   const setQuickOpen = useUI((s) => s.setQuickOpen)
+  const week = weekRange(today, profile?.weeklyStartsMonday ?? true)
+  const weekDays = useWeekDays(week)
 
   if (!profile) return null
+
+  const wk = weekDays ? weekCalories(profile, weekDays, today) : null
+  const weekHasData = !!wk && (wk.eaten > 0 || wk.planned > 0)
+  const weekPct = wk && wk.budget > 0 ? Math.min(100, (wk.eaten / wk.budget) * 100) : 0
+  const weekOver = !!wk && wk.eaten > wk.budget
 
   const totals = dayTotals(entries)
   const exKcal = exerciseCalories(exercise, steps?.caloriesBurned ?? 0)
@@ -70,6 +78,8 @@ export default function TodayScreen() {
         </div>
       </div>
 
+      <InstallBanner />
+
       {/* Tarjeta principal de calorías */}
       <div className="card card--glow" style={{ marginBottom: 14 }}>
         <div className="row between" style={{ alignItems: 'center' }}>
@@ -105,18 +115,33 @@ export default function TodayScreen() {
         </div>
       </div>
 
-      {/* Plan semanal (acceso destacado) */}
-      <button className="card card--tap row between" style={{ width: '100%', marginBottom: 14 }} onClick={() => nav('/planner')}>
-        <div className="row gap-3">
-          <div className="center-all" style={{ width: 40, height: 40, borderRadius: 11, background: 'color-mix(in srgb, var(--brand) 18%, transparent)' }}>
-            <Icon name="calendar" size={22} color="var(--brand)" />
+      {/* Plan semanal + calorías de la semana (acceso destacado) */}
+      <button className="card card--tap col gap-2" style={{ width: '100%', marginBottom: 14, alignItems: 'stretch' }} onClick={() => nav('/planner')}>
+        <div className="row between" style={{ alignItems: 'center' }}>
+          <div className="row gap-3" style={{ minWidth: 0 }}>
+            <div className="center-all" style={{ width: 40, height: 40, borderRadius: 11, background: 'color-mix(in srgb, var(--brand) 18%, transparent)', flexShrink: 0 }}>
+              <Icon name="calendar" size={22} color="var(--brand)" />
+            </div>
+            <div className="col" style={{ alignItems: 'flex-start', gap: 1, minWidth: 0 }}>
+              <span className="h3">Plan semanal</span>
+              <span className="cap dim ellipsis">
+                {weekHasData ? 'Calorías de toda la semana' : 'Planifica tus comidas y deporte'}
+              </span>
+            </div>
           </div>
-          <div className="col" style={{ alignItems: 'flex-start' }}>
-            <span className="h3">Plan semanal</span>
-            <span className="cap dim">Planifica tus comidas y deporte</span>
+          <div className="row gap-2" style={{ alignItems: 'center', flexShrink: 0 }}>
+            {weekHasData && wk && (
+              <div className="col" style={{ alignItems: 'flex-end', gap: 1 }}>
+                <span className="tabnum" style={{ fontWeight: 800, fontSize: 16, color: weekOver ? 'var(--bad)' : 'var(--text)' }}>{fmtKcal(wk.eaten)}</span>
+                <span className="cap dim tabnum">de {fmtKcal(wk.budget)} kcal</span>
+              </div>
+            )}
+            <Icon name="chevron-right" size={20} color="var(--text-3)" />
           </div>
         </div>
-        <Icon name="chevron-right" size={20} color="var(--text-3)" />
+        {weekHasData && (
+          <div className="macro-bar"><span style={{ width: `${weekPct}%`, background: weekOver ? 'var(--bad)' : 'var(--brand)' }} /></div>
+        )}
       </button>
 
       {/* Tarjetas rápidas */}
