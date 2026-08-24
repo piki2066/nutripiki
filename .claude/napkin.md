@@ -18,6 +18,12 @@
 2. **Los datos van atados al ORIGEN (la URL) y, en iPhone, el icono instalado tiene almacenamiento separado de Safari.**
    Do instead: en cualquier flujo nuevo, empujar a instalar ANTES de meter datos y recordar la exportación JSON como respaldo.
 
+## Supabase (operativa)
+1. **[2026-08-24] El CLI no está instalado: usar `npx supabase@latest …`.** La sesión está en el llavero de macOS y sigue viva; `projects list`, `db push`, `config push` y `projects api-keys` funcionan sin login.
+   Do instead: para cambios de esquema, añadir un fichero a `supabase/migrations/` y `db push` con la contraseña de `~/.nutripiki-supabase-db-password.txt`; para ajustes de Auth, editar `supabase/config.toml` y `config push`.
+2. **[2026-08-24] Probar el backend real sin navegador.** Con la clave publishable se puede hacer `POST /auth/v1/signup` (alta anónima) y llamar a las RPC con el token; con la `service_role` se listan y borran usuarios en `/auth/v1/admin/users`.
+   Do instead: montar el caso completo (dos altas, añadir amigo, subir resumen, comprobar que un tercero no ve nada) y **borrar los usuarios de prueba al terminar**.
+
 ## Verificación
 1. `npm run build` siempre antes de dar nada por bueno; `npm test` para el motor de nutrición (incluye las sumas semanales).
 2. Verificación de UI real sin navegador interactivo: `npm run preview` + Chrome headless con `--remote-debugging-port` y CDP (`Runtime.evaluate` con el setter nativo de `HTMLInputElement.prototype.value` + evento `input` burbujeante para simular tecleo en React; para blur, despachar `focusout` burbujeante — `element.blur()` no es fiable en headless).
